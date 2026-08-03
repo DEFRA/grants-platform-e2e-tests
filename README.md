@@ -1,17 +1,16 @@
 grants-platform-e2e-tests
 
-The template to create a service that runs WDIO tests against an environment.
+Playwright end-to-end test suite for grants platform journeys.
 
-- [Local](#local)
+- [Local](#local-development)
   - [Requirements](#requirements)
-    - [Node.js](#nodejs)
   - [Setup](#setup)
   - [Running local tests](#running-local-tests)
   - [Debugging local tests](#debugging-local-tests)
 - [Production](#production)
-  - [Debugging tests](#debugging-tests)
+- [Running on GitHub](#running-on-github)
+- [Playwright configurations](#playwright-configurations)
 - [Licence](#licence)
-  - [About the licence](#about-the-licence)
 
 ## Local Development
 
@@ -19,7 +18,7 @@ The template to create a service that runs WDIO tests against an environment.
 
 #### Node.js
 
-Please install [Node.js](http://nodejs.org/) `>= v20` and [npm](https://nodejs.org/) `>= v9`. You will find it
+Please install [Node.js](http://nodejs.org/) `>= v22.13.1` and [npm](https://nodejs.org/). You will find it
 easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
 
 To use the correct version of Node.js for this application, via nvm:
@@ -30,18 +29,33 @@ nvm use
 
 ### Setup
 
-Install application dependencies:
+Install application dependencies and Playwright browsers:
 
 ```bash
 npm install
+npm run setup:browsers
 ```
+
+Copy `.env.example` to `.env` and fill in credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required variables: `ENVIRONMENT`, `DEFRA_ID_USER_PASSWORD`, `ENTRA_ID_ADMIN_USER`, `ENTRA_ID_USER_PASSWORD`, `GRANTS_UI_BACKEND_API_TOKEN`
 
 ### Running local tests
 
-Start application you are testing on the url specified in `baseUrl` [wdio.local.conf.js](wdio.local.conf.js)
+Runs against CDP environments using `playwright.local.config.js` (headed Chrome by default):
 
 ```bash
 npm run test:local
+```
+
+Run a single spec without cleaning reports:
+
+```bash
+npm run test:local:spec -- test/specs/woodland_management_journey.js
 ```
 
 ### Debugging local tests
@@ -50,47 +64,54 @@ npm run test:local
 npm run test:local:debug
 ```
 
+Set `HEADLESS=true` to run headless locally. Set `PW_CHANNEL` to override the browser channel (default: `chrome`).
+
 ## Production
 
 ### Running the tests
 
-Tests are run from the CDP-Portal under the Test Suites section. Before any changes can be run, a new docker image must be built, this will happen automatically when a pull request is merged into the `main` branch.
-You can check the progress of the build under the actions section of this repository. Builds typically take around 1-2 minutes.
+Tests are run from the CDP Portal under the Test Suites section. Before any changes can be run, a new docker image must be built — this happens automatically when a pull request is merged into the `main` branch.
 
 The results of the test run are made available in the portal.
 
 ## Requirements of CDP Environment Tests
 
 1. Your service builds as a docker container using the `.github/workflows/publish.yml`
-   The workflow tags the docker images allowing the CDP Portal to identify how the container should be run on the platform.
-   It also ensures its published to the correct docker repository.
-
 2. The Dockerfile's entrypoint script should return exit code of 0 if the test suite passes or 1/>0 if it fails
-
 3. Test reports should be published to S3 using the script in `./bin/publish-tests.sh`
 
 ## Running on GitHub
 
-Alternatively you can run the test suite as a GitHub workflow.
-Test runs on GitHub are not able to connect to the CDP Test environments. Instead, they run the tests agains a version of the services running in docker.
-A docker compose `compose.yml` is included as a starting point, which includes the databases (mongodb, redis) and infrastructure (localstack) pre-setup.
+Test runs on GitHub execute against docker-compose services on `http://localhost:3000`:
 
-Steps:
+```bash
+docker compose up -d
+npm run test:github
+```
 
-1. Edit the compose.yml to include your services.
-2. Modify the scripts in docker/scripts to pre-populate the database, if required and create any localstack resources.
-3. Test the setup locally with `docker compose up` and `npm run test:github`
-4. Set up the workflow trigger in `.github/workflows/journey-tests`.
+See `compose.yml` for infrastructure setup (mongodb, redis, localstack).
 
-By default, the provided workflow will run when triggered manually from GitHub or when triggered by another workflow.
+## Playwright Configurations
 
-If you want to use the repository exclusively for running docker composed based test suites consider displaying the publish.yml workflow.
+| Config                        | WDIO equivalent       | Script                | Purpose                               |
+| ----------------------------- | --------------------- | --------------------- | ------------------------------------- |
+| `playwright.config.js`        | `wdio.conf.js`        | `npm test`            | CDP Portal / Docker (headless, proxy) |
+| `playwright.local.config.js`  | `wdio.local.conf.js`  | `npm run test:local`  | Local dev against CDP (headed Chrome) |
+| `playwright.github.config.js` | `wdio.github.conf.js` | `npm run test:github` | GitHub Actions / docker-compose       |
 
-## BrowserStack
+URL configuration is resolved in `test/utils/test-config.js` based on the active profile (`cdp`, `local`, `github`).
 
-Two wdio configuration files are provided to help run the tests using BrowserStack in both a GitHub workflow (`wdio.github.browserstack.conf.js`) and from the CDP Portal (`wdio.browserstack.conf.js`).
-They can be run from npm using the `npm run test:browserstack` (for running via portal) and `npm run test:github:browserstack` (from GitHib runner).
-See the CDP Documentation for more details.
+## Test Specs
+
+| Spec                                   | Description                                    |
+| -------------------------------------- | ---------------------------------------------- |
+| `single_action_journey.js`             | SFI single action (CMOR1) full journey         |
+| `action_with_hefer_consent_journey.js` | SFI with HEFER consent (feature-flagged)       |
+| `action_with_sssi_consent_journey.js`  | SFI with SSSI consent (feature-flagged)        |
+| `action_with_terminate_journey.js`     | Caseworker terminates after agreement accepted |
+| `woodland_management_journey.js`       | Woodland Management Plan full journey          |
+| `clig3_action_journey.js`              | CLIG3 action (skipped)                         |
+| `upl8_action_journey.js`               | UPL8 action (skipped)                          |
 
 ## Licence
 
@@ -101,11 +122,3 @@ THIS INFORMATION IS LICENSED UNDER THE CONDITIONS OF THE OPEN GOVERNMENT LICENCE
 The following attribution statement MUST be cited in your products and applications when using this information.
 
 > Contains public sector information licensed under the Open Government licence v3
-
-### About the licence
-
-The Open Government Licence (OGL) was developed by the Controller of Her Majesty's Stationery Office (HMSO) to enable
-information providers in the public sector to license the use and re-use of their information under a common open
-licence.
-
-It is designed to encourage use and re-use of information freely and flexibly, with only a few conditions.

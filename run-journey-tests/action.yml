@@ -23,7 +23,9 @@ runs:
         node-version: 20
         cache: npm
     - name: Setup the tests
-      run: npm i
+      run: |
+        npm i
+        npx playwright install --with-deps chromium
       shell: bash
     - name: Start docker compose
       shell: bash
