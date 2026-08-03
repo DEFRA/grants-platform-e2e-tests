@@ -1,4 +1,5 @@
 .DS_Store
+.claude/
 .npm/
 .vscode
 .idea
@@ -8,6 +9,11 @@ npm-debug.log
 coverage
 .cache
 .png
+.env
 allure-report/
 allure-results/
+test-results/
+playwright-report/
+blob-report/
 FAILED
+AGENTS.local.md

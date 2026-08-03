@@ -1,14 +1,14 @@
 ################################################################################
-# Docker Compose file for starting up the service for testing in GitHub workflow
-# This template provides comparable infrastructure to the real environment.
+# Docker Compose file for starting up the service for testing in GitHub workflow.
+# Playwright runs its own Chromium browser — no Selenium Grid required.
+#
+# Infrastructure comparable to the real environment:
 #   - mongodb
 #   - redis
 #   - localstack (s3, sqs, sns)
 #
 # Both mongo and localstack have init scripts included for setting up resources
 # on startup. These scripts are in docker/scripts.
-#
-# It also includes a selenium-chrome container for running the browser headless.
 #
 # The services being tested can either be started up here using the latest
 # builds from dockerhub.
@@ -18,26 +18,16 @@
 #
 ################################################################################
 services:
-
-################################################################################
-# Headless browser, used by the test suite to actually run the tests against the
-# containers.
-  selenium-chrome:
-    image: selenium/standalone-chrome:123.0
-    ports:
-      - 4444:4444
-
-################################################################################
   mongodb:
     image: mongo:6
     volumes:
       - ./docker/scripts/mongodb:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.hello().ok"]
+      test: ['CMD', 'mongosh', '--eval', 'db.hello().ok']
       interval: 5s
       start_period: 5s
       retries: 3
-################################################################################
+
   localstack:
     image: localstack/localstack:3.2.0
     environment:
@@ -49,21 +39,19 @@ services:
     volumes:
       - ./docker/scripts/localstack:/etc/localstack/init/ready.d
     healthcheck:
-      test: ["CMD", "curl", "localhost:4566"]
+      test: ['CMD', 'curl', 'localhost:4566']
       interval: 5s
       start_period: 5s
       retries: 3
 
-################################################################################
   redis:
     image: redis:7
     restart: always
     healthcheck:
-      test: [ "CMD", "redis-cli", "PING" ]
+      test: ['CMD', 'redis-cli', 'PING']
       interval: 5s
       start_period: 2s
       retries: 5
-
 
 ################################################################################
 #

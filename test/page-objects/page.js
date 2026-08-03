@@ -1,4 +1,4 @@
-import { browser, $ } from '@wdio/globals'
+import { browser, $ } from '../utils/test-runtime.js'
 
 class Page {
   get pageHeading() {
@@ -7,6 +7,11 @@ class Page {
 
   open(path) {
     return browser.url(path)
+  }
+
+  async clickButton(selector) {
+    const button = await $("button[type='submit']")
+    await button.click()
   }
 }
 
