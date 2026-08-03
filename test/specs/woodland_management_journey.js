@@ -2,9 +2,9 @@ import { test } from '../fixtures/base.fixture.js'
 import {
   completeWoodlandJourney,
   completeWoodlandFCJourney
-} from '../utils/cw-journey-helper.js'
-import { loginAndRunWoodlandManagementJourney } from '../utils/woodland-journey-helper.js'
-import { completeWoodlandAgreementJourney } from '../utils/agreement-journey-helper.js'
+} from '../journey-helpers/cw-journey-helper.js'
+import { loginAndRunWoodlandManagementJourney } from '../journey-helpers/woodland-journey-helper.js'
+import { completeWoodlandAgreementJourney } from '../journey-helpers/agreement-journey-helper.js'
 import Backend from '../utils/backend.js'
 
 test.afterEach(async ({ context }) => {

@@ -1,5 +1,5 @@
-import { browser, expect, $ } from './test-runtime.js'
-import { entraLogin } from '../utils/cw-login-helper.js'
+import { browser, expect, $ } from '../utils/test-runtime.js'
+import { entraLogin } from './cw-login-helper.js'
 import CwBasePage from '../page-objects/cw.base.page.js'
 import CwTasksPage from '../page-objects/cw.tasks.page.js'
 import CWAgreementsPage from '../page-objects/cw.agreements.page.js'

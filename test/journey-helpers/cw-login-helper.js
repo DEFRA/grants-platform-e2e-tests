@@ -1,4 +1,4 @@
-import { $, browser } from './test-runtime.js'
+import { $, browser } from '../utils/test-runtime.js'
 export async function entraLogin(username, password) {
   const expectedDomain = 'fg-cw-frontend'
   await performLogin(username, password)

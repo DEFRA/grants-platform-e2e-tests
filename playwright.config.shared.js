@@ -46,7 +46,7 @@ export function createPlaywrightConfig({
       ['allure-playwright', { resultsDir: 'allure-results' }],
       ['json', { outputFile: 'test-results/results.json' }]
     ],
-    globalTeardown: path.join(__dirname, 'test/global-teardown.js'),
+    globalTeardown: path.join(__dirname, 'test/utils/global-teardown.js'),
     use: {
       ...(headless ? devices['Desktop Chrome'] : {}),
       channel,

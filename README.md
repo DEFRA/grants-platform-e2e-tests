@@ -27,6 +27,8 @@ To use the correct version of Node.js for this application, via nvm:
 nvm use
 ```
 
+
+
 ### Setup
 
 Install application dependencies and Playwright browsers:
@@ -58,6 +60,8 @@ Run a single spec without cleaning reports:
 npm run test:local:spec -- test/specs/woodland_management_journey.js
 ```
 
+
+
 ### Debugging local tests
 
 ```bash
@@ -66,7 +70,9 @@ npm run test:local:debug
 
 Set `HEADLESS=true` to run headless locally. Set `PW_CHANNEL` to override the browser channel (default: `chrome`).
 
-## Production
+
+
+## Running on CDP
 
 ### Running the tests
 
@@ -79,6 +85,8 @@ The results of the test run are made available in the portal.
 1. Your service builds as a docker container using the `.github/workflows/publish.yml`
 2. The Dockerfile's entrypoint script should return exit code of 0 if the test suite passes or 1/>0 if it fails
 3. Test reports should be published to S3 using the script in `./bin/publish-tests.sh`
+
+
 
 ## Running on GitHub
 
@@ -93,26 +101,21 @@ See `compose.yml` for infrastructure setup (mongodb, redis, localstack).
 
 ## Playwright Configurations
 
+
 | Config                        | WDIO equivalent       | Script                | Purpose                               |
 | ----------------------------- | --------------------- | --------------------- | ------------------------------------- |
 | `playwright.config.js`        | `wdio.conf.js`        | `npm test`            | CDP Portal / Docker (headless, proxy) |
 | `playwright.local.config.js`  | `wdio.local.conf.js`  | `npm run test:local`  | Local dev against CDP (headed Chrome) |
 | `playwright.github.config.js` | `wdio.github.conf.js` | `npm run test:github` | GitHub Actions / docker-compose       |
 
+
 URL configuration is resolved in `test/utils/test-config.js` based on the active profile (`cdp`, `local`, `github`).
 
 ## Test Specs
+
 
 | Spec                             | Description                           |
 | -------------------------------- | ------------------------------------- |
 | `woodland_management_journey.js` | Woodland Management Plan full journey |
 
-## Licence
 
-THIS INFORMATION IS LICENSED UNDER THE CONDITIONS OF THE OPEN GOVERNMENT LICENCE found at:
-
-<http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3>
-
-The following attribution statement MUST be cited in your products and applications when using this information.
-
-> Contains public sector information licensed under the Open Government licence v3

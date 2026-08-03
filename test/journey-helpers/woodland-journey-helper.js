@@ -1,4 +1,4 @@
-import { browser, $ } from './test-runtime.js'
+import { browser, $ } from '../utils/test-runtime.js'
 import LoginPage from '../page-objects/login.page.js'
 import WoodlandHomePage from '../page-objects/woodland.home.page.js'
 

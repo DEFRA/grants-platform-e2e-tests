@@ -1,4 +1,4 @@
-import { browser, expect } from './test-runtime.js'
+import { browser, expect } from '../utils/test-runtime.js'
 import AgreementReviewOfferPage from '../page-objects/agreements.review.offer.page.js'
 import AgreementsAcceptYourOfferPage from '../page-objects/agreements.accept.your.offer.page.js'
 import AgreementOfferAcceptedPage from '../page-objects/agreements.offer.accepted.page.js'

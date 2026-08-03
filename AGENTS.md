@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains Playwright end-to-end tests for the Woodland Management Plan journey. Test specs live in `test/specs/`, page objects in `test/page-objects/`, and reusable helpers in `test/utils/`. Root Playwright configs select the execution target: `playwright.config.js`, `playwright.local.config.js`, and `playwright.github.config.js`. Docker and CI support files are in `Dockerfile`, `compose.yml`, `docker/`, `.github/workflows/`, `entrypoint.sh`, and `run-journey-tests/`. Allure report output is generated into `allure-results/` and `allure-report/`.
+This repository contains Playwright end-to-end tests for the Woodland Management Plan journey. Test specs live in `test/specs/`, page objects in `test/page-objects/`, journey helpers in `test/journey-helpers/`, and shared utilities in `test/utils/`. Root Playwright configs select the execution target: `playwright.config.js`, `playwright.local.config.js`, and `playwright.github.config.js`. Docker and CI support files are in `Dockerfile`, `compose.yml`, `docker/`, `.github/workflows/`, `entrypoint.sh`, and `run-journey-tests/`. Allure report output is generated into `allure-results/` and `allure-report/`.
 
 ## Commands
 
