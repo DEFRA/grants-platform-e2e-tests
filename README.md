@@ -103,15 +103,9 @@ URL configuration is resolved in `test/utils/test-config.js` based on the active
 
 ## Test Specs
 
-| Spec                                   | Description                                    |
-| -------------------------------------- | ---------------------------------------------- |
-| `single_action_journey.js`             | SFI single action (CMOR1) full journey         |
-| `action_with_hefer_consent_journey.js` | SFI with HEFER consent (feature-flagged)       |
-| `action_with_sssi_consent_journey.js`  | SFI with SSSI consent (feature-flagged)        |
-| `action_with_terminate_journey.js`     | Caseworker terminates after agreement accepted |
-| `woodland_management_journey.js`       | Woodland Management Plan full journey          |
-| `clig3_action_journey.js`              | CLIG3 action (skipped)                         |
-| `upl8_action_journey.js`               | UPL8 action (skipped)                          |
+| Spec                             | Description                           |
+| -------------------------------- | ------------------------------------- |
+| `woodland_management_journey.js` | Woodland Management Plan full journey |
 
 ## Licence
 
