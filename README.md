@@ -27,8 +27,6 @@ To use the correct version of Node.js for this application, via nvm:
 nvm use
 ```
 
-
-
 ### Setup
 
 Install application dependencies and Playwright browsers:
@@ -60,8 +58,6 @@ Run a single spec without cleaning reports:
 npm run test:local:spec -- test/specs/woodland_management_journey.js
 ```
 
-
-
 ### Debugging local tests
 
 ```bash
@@ -69,8 +65,6 @@ npm run test:local:debug
 ```
 
 Set `HEADLESS=true` to run headless locally. Set `PW_CHANNEL` to override the browser channel (default: `chrome`).
-
-
 
 ## Running on CDP
 
@@ -86,8 +80,6 @@ The results of the test run are made available in the portal.
 2. The Dockerfile's entrypoint script should return exit code of 0 if the test suite passes or 1/>0 if it fails
 3. Test reports should be published to S3 using the script in `./bin/publish-tests.sh`
 
-
-
 ## Running on GitHub
 
 Test runs on GitHub execute against docker-compose services on `http://localhost:3000`:
@@ -101,21 +93,16 @@ See `compose.yml` for infrastructure setup (mongodb, redis, localstack).
 
 ## Playwright Configurations
 
-
 | Config                        | WDIO equivalent       | Script                | Purpose                               |
 | ----------------------------- | --------------------- | --------------------- | ------------------------------------- |
 | `playwright.config.js`        | `wdio.conf.js`        | `npm test`            | CDP Portal / Docker (headless, proxy) |
 | `playwright.local.config.js`  | `wdio.local.conf.js`  | `npm run test:local`  | Local dev against CDP (headed Chrome) |
 | `playwright.github.config.js` | `wdio.github.conf.js` | `npm run test:github` | GitHub Actions / docker-compose       |
 
-
 URL configuration is resolved in `test/utils/test-config.js` based on the active profile (`cdp`, `local`, `github`).
 
 ## Test Specs
 
-
 | Spec                             | Description                           |
 | -------------------------------- | ------------------------------------- |
 | `woodland_management_journey.js` | Woodland Management Plan full journey |
-
-
