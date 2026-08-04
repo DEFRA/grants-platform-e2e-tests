@@ -104,6 +104,15 @@ function parseSelector(selector) {
   return { type: 'css', selector: normalized }
 }
 
+function isNavigationError(error) {
+  const message = error?.message ?? ''
+  return (
+    message.includes('Execution context was destroyed') ||
+    message.includes('Target closed') ||
+    message.includes('frame was detached')
+  )
+}
+
 function resolveLocator(root, selector) {
   const parsed = parseSelector(selector)
 
@@ -178,11 +187,25 @@ class ElementWrapper {
   }
 
   async isDisplayed() {
-    return this.locator.isVisible()
+    try {
+      return await this.locator.isVisible()
+    } catch (error) {
+      if (isNavigationError(error)) {
+        return false
+      }
+      throw error
+    }
   }
 
   async isExisting() {
-    return (await this.locator.count()) > 0
+    try {
+      return (await this.locator.count()) > 0
+    } catch (error) {
+      if (isNavigationError(error)) {
+        return false
+      }
+      throw error
+    }
   }
 
   async isSelected() {

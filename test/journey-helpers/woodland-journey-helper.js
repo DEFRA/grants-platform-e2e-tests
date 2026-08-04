@@ -33,19 +33,41 @@ export async function loginAndRunWoodlandManagementJourney({
   return { appRefNum }
 }
 
+async function waitForLoginPageOrCheckDetails() {
+  let pageState
+
+  await browser.waitUntil(
+    async () => {
+      const loginInput = await $('#crn')
+      const detailsRadio = await $('#businessDetailsUpToDate')
+
+      if (await detailsRadio.isExisting()) {
+        pageState = 'authenticated'
+        return true
+      }
+
+      if (await loginInput.isExisting()) {
+        pageState = 'login'
+        return true
+      }
+
+      return false
+    },
+    {
+      timeout: 50000,
+      timeoutMsg:
+        'Neither login page nor check-details page loaded after opening woodland journey'
+    }
+  )
+
+  return pageState
+}
+
 async function loginIfRequired(username, password) {
-  const loginInput = await $('#crn')
+  const pageState = await waitForLoginPageOrCheckDetails()
 
-  if (await loginInput.isExisting()) {
+  if (pageState === 'login') {
     await LoginPage.login(username, password)
-    return
-  }
-
-  try {
-    await loginInput.waitForExist({ timeout: 5000 })
-    await LoginPage.login(username, password)
-  } catch {
-    // Already authenticated — no login form shown
   }
 }
 
