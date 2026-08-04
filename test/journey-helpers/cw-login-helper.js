@@ -1,4 +1,7 @@
 import { $, browser } from '../utils/test-runtime.js'
+
+const ENTRA_LOGIN_FIELD_TIMEOUT = 50000
+
 export async function entraLogin(username, password) {
   const expectedDomain = 'fg-cw-frontend'
   await performLogin(username, password)
@@ -10,12 +13,12 @@ export async function entraLogin(username, password) {
  */
 async function performLogin(username, password) {
   const emailField = await $('#i0116')
-  await emailField.waitForDisplayed({ timeout: 15000 })
+  await emailField.waitForDisplayed({ timeout: ENTRA_LOGIN_FIELD_TIMEOUT })
   await emailField.setValue(username)
   await (await $('#idSIButton9')).click() // Next
   await browser.pause(5000)
   const passwordField = await $('#i0118')
-  await passwordField.waitForDisplayed({ timeout: 15000 })
+  await passwordField.waitForDisplayed({ timeout: ENTRA_LOGIN_FIELD_TIMEOUT })
   await passwordField.setValue(password)
 
   // sometime sign in button don't click
