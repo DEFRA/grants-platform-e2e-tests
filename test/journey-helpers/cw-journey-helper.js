@@ -1,10 +1,40 @@
 import { browser, expect, $ } from '../utils/test-runtime.js'
-import { entraLogin } from './cw-login-helper.js'
+import {
+  entraLogin,
+  isCaseworkerPortalUrl,
+  waitForCaseworkerPortalOrLogin
+} from './cw-login-helper.js'
 import CwBasePage from '../page-objects/cw.base.page.js'
 import CwTasksPage from '../page-objects/cw.tasks.page.js'
 import CWAgreementsPage from '../page-objects/cw.agreements.page.js'
 
 const cwPage = new CwBasePage()
+
+export async function returnWoodlandApplication(appRefNum) {
+  await loginToCwAndOpenCase(appRefNum)
+
+  await CwTasksPage.clickButtonByText('Start')
+  await CwTasksPage.selectRadioByValue('ACTION_RETURN_TO_CUSTOMER')
+
+  await CwTasksPage.enterText(
+    'ACTION_RETURN_TO_CUSTOMER-comment',
+    'Returning Application as more info required'
+  )
+
+  await CwTasksPage.clickButtonByText('Confirm')
+  await CwTasksPage.selectRadioByValue('yes')
+  await CwTasksPage.clickButtonByText('Confirm')
+
+  await browser.waitUntil(
+    async () =>
+      (await cwPage.getApplicationStatusText()) === 'Returned to customer',
+    {
+      timeout: 30000,
+      timeoutMsg: 'Application status did not update to "Returned to customer"'
+    }
+  )
+  expect(await cwPage.getApplicationStatusText()).toBe('Returned to customer')
+}
 
 export async function completeWoodlandJourney(appRefNum) {
   await loginToCwAndOpenCase(appRefNum)
@@ -106,12 +136,34 @@ export async function completeWoodlandFCJourney(appRefNum) {
 
 async function loginToCwAndOpenCase(appRefNum) {
   await browser.url(browser.options.cwUrl)
+  await waitForCaseworkerPortalOrLogin()
+
   const cwUsername = process.env.ENTRA_ID_ADMIN_USER
   const cwPassword = process.env.ENTRA_ID_USER_PASSWORD
   await entraLogin(cwUsername, cwPassword)
 
-  const isReferenceInTable = await cwPage.waitUntilVisible(appRefNum)
-  await expect(isReferenceInTable).toBe(true)
+  await browser.waitUntil(
+    async () => isCaseworkerPortalUrl(await browser.getUrl()),
+    {
+      timeout: 60000,
+      timeoutMsg: 'Caseworker portal did not load after login'
+    }
+  )
+
+  await browser.waitUntil(
+    async () => {
+      try {
+        return await cwPage.waitUntilVisible(appRefNum, 5000)
+      } catch {
+        return false
+      }
+    },
+    {
+      timeout: 60000,
+      interval: 3000,
+      timeoutMsg: `Case "${appRefNum}" was not found in caseworker portal`
+    }
+  )
 
   await browser.pause(2000)
   await cwPage.clickLinkByText(appRefNum)

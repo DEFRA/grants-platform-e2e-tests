@@ -1,6 +1,9 @@
-import { browser, $ } from '../utils/test-runtime.js'
+import { browser, $, expect } from '../utils/test-runtime.js'
 import LoginPage from '../page-objects/login.page.js'
 import WoodlandHomePage from '../page-objects/woodland.home.page.js'
+
+const RETURNED_APPLICATION_HEADING =
+  'Your application has been returned to you to make amendments'
 
 /**
  * Complete the Woodland Management Plan application journey via the UI.
@@ -31,6 +34,43 @@ export async function loginAndRunWoodlandManagementJourney({
   const appRefNum = await WoodlandHomePage.getApplicationReference()
   await browser.takeScreenshot()
   return { appRefNum }
+}
+
+/**
+ * Log in as the farmer, update a returned woodland application, and resubmit.
+ */
+export async function loginAndUpdateWoodlandApplication({
+  username,
+  password,
+  applicationData
+}) {
+  if (!applicationData) {
+    throw new Error('applicationData is required for woodland journey')
+  }
+
+  await WoodlandHomePage.openReturnedApplication()
+  await loginForReturnedApplication(username, password)
+
+  const returnedHeading = await $('h1.govuk-heading-l')
+  await returnedHeading.waitForDisplayed({ timeout: 50000 })
+  expect(await returnedHeading.getText()).toBe(RETURNED_APPLICATION_HEADING)
+
+  await WoodlandHomePage.clickButton('Continue')
+  await WoodlandHomePage.updateWoodlandOverTenYearsOld(
+    applicationData.hectaresTenOrOverYearsOld
+  )
+  await WoodlandHomePage.clickButton('Continue')
+  await WoodlandHomePage.clickButton('Continue')
+  await WoodlandHomePage.clickButton('Confirm and submit')
+
+  await browser.waitUntil(
+    async () => (await browser.getUrl()).includes('/woodland/confirmation'),
+    { timeout: 30000, timeoutMsg: 'Woodland confirmation page did not load' }
+  )
+
+  const newAppRefNum = await WoodlandHomePage.getApplicationReference()
+  await browser.takeScreenshot()
+  return { newAppRefNum }
 }
 
 async function waitForLoginPageOrCheckDetails() {
@@ -69,6 +109,62 @@ async function loginIfRequired(username, password) {
   if (pageState === 'login') {
     await LoginPage.login(username, password)
   }
+}
+
+async function waitForLoginPageOrReturnedApplication() {
+  let pageState
+
+  await browser.waitUntil(
+    async () => {
+      const loginInput = await $('#crn')
+      const returnedHeading = await $('h1.govuk-heading-l')
+
+      if (await returnedHeading.isExisting()) {
+        const headingText = await returnedHeading.getText()
+        if (headingText === RETURNED_APPLICATION_HEADING) {
+          pageState = 'returned'
+          return true
+        }
+      }
+
+      if (await loginInput.isExisting()) {
+        pageState = 'login'
+        return true
+      }
+
+      return false
+    },
+    {
+      timeout: 50000,
+      timeoutMsg:
+        'Neither login page nor returned-to-customer page loaded after opening woodland journey'
+    }
+  )
+
+  return pageState
+}
+
+async function loginForReturnedApplication(username, password) {
+  const pageState = await waitForLoginPageOrReturnedApplication()
+
+  if (pageState === 'login') {
+    await LoginPage.login(username, password)
+  }
+
+  await browser.waitUntil(
+    async () => {
+      const returnedHeading = await $('h1.govuk-heading-l')
+      if (!(await returnedHeading.isExisting())) {
+        return false
+      }
+
+      return (await returnedHeading.getText()) === RETURNED_APPLICATION_HEADING
+    },
+    {
+      timeout: 50000,
+      timeoutMsg: 'Returned to customer page did not load after login'
+    }
+  )
 }
 
 async function loginAndValidate(username, password) {

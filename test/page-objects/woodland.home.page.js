@@ -6,6 +6,10 @@ class WoodlandHomePage extends Page {
     return super.open('/woodland/check-details')
   }
 
+  openReturnedApplication() {
+    return super.open('/woodland/returned-to-customer')
+  }
+
   clearApplicationState() {
     return super.open('/woodland/clear-application-state')
   }
@@ -71,6 +75,29 @@ class WoodlandHomePage extends Page {
     await this.clickButton('Continue')
     await this.clickButton('Continue')
     await this.clickButton('Confirm and submit')
+  }
+
+  async updateWoodlandOverTenYearsOld(hectaresTenOrOverYearsOld) {
+    await this.waitForUrlIncludes('/woodland/summary')
+    await this.clickSummaryChangeFor('Woodland over 10 years old')
+    await this.waitForUrlIncludes('/woodland/total-area-of-woodland')
+    await this.typeById(
+      'hectaresTenOrOverYearsOld',
+      String(hectaresTenOrOverYearsOld)
+    )
+    await this.clickButton('Save and continue')
+    await this.waitForUrlIncludes('/woodland/summary')
+  }
+
+  async clickSummaryChangeFor(fieldLabel) {
+    const changeLink = await $(
+      `//dt[contains(normalize-space(.),"${fieldLabel}")]/following-sibling::dd[contains(@class,"govuk-summary-list__actions")]//a`
+    )
+    await changeLink.waitForClickable({
+      timeout: 50000,
+      timeoutMsg: `Change link for "${fieldLabel}" was not clickable`
+    })
+    await changeLink.click()
   }
 
   async getApplicationReference() {

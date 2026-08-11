@@ -1,17 +1,65 @@
 import { $, browser } from '../utils/test-runtime.js'
 
 const ENTRA_LOGIN_FIELD_TIMEOUT = 50000
+const CW_PORTAL_DOMAIN = 'fg-cw-frontend'
+const MICROSOFT_LOGIN_DOMAIN = 'login.microsoftonline.com'
+
+function getUrlHostname(url) {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return ''
+  }
+}
+
+function isCaseworkerPortalUrl(url) {
+  return getUrlHostname(url).startsWith(CW_PORTAL_DOMAIN)
+}
+
+function isMicrosoftLoginUrl(url) {
+  return getUrlHostname(url).includes(MICROSOFT_LOGIN_DOMAIN)
+}
+
+export { isCaseworkerPortalUrl }
 
 export async function entraLogin(username, password) {
-  const expectedDomain = 'fg-cw-frontend'
+  if (isCaseworkerPortalUrl(await browser.getUrl())) {
+    console.log('Already on caseworker portal — skipping Entra ID login')
+    return
+  }
+
   await performLogin(username, password)
-  await waitForAppLoadOrRetry(expectedDomain, username, password)
+  await waitForAppLoadOrRetry(username, password)
   console.log(`Entra ID login successful for ${username}`)
 }
+
+export async function waitForCaseworkerPortalOrLogin() {
+  await browser.waitUntil(
+    async () => {
+      const currentUrl = await browser.getUrl()
+      return (
+        isCaseworkerPortalUrl(currentUrl) || isMicrosoftLoginUrl(currentUrl)
+      )
+    },
+    {
+      timeout: ENTRA_LOGIN_FIELD_TIMEOUT,
+      timeoutMsg: 'Caseworker portal or Microsoft login page did not load'
+    }
+  )
+}
+
 /**
  * Performs the base login steps (enter email, password, click sign in).
  */
 async function performLogin(username, password) {
+  await browser.waitUntil(
+    async () => isMicrosoftLoginUrl(await browser.getUrl()),
+    {
+      timeout: ENTRA_LOGIN_FIELD_TIMEOUT,
+      timeoutMsg: 'Microsoft login page did not load'
+    }
+  )
+
   const emailField = await $('#i0116')
   await emailField.waitForDisplayed({ timeout: ENTRA_LOGIN_FIELD_TIMEOUT })
   await emailField.setValue(username)
@@ -28,20 +76,17 @@ async function performLogin(username, password) {
 /**
  * Waits until app loads or retries login if redirect goes back to Microsoft login page.
  */
-async function waitForAppLoadOrRetry(expectedDomain, username, password) {
+async function waitForAppLoadOrRetry(username, password) {
   let retryCount = 0
   const maxRetries = 2
 
   await browser.waitUntil(
     async () => {
       const currentUrl = await browser.getUrl()
-      if (currentUrl.includes(expectedDomain)) {
+      if (isCaseworkerPortalUrl(currentUrl)) {
         return true
       }
-      if (
-        currentUrl.includes('login.microsoftonline.com') &&
-        retryCount < maxRetries
-      ) {
+      if (isMicrosoftLoginUrl(currentUrl) && retryCount < maxRetries) {
         retryCount++
         await performRetryLogin(username, password)
       }
@@ -108,7 +153,7 @@ async function clickSignInWithRetry(maxRetries = 3) {
 
     // Check if URL changed (redirect started)
     const currentUrl = await browser.getUrl()
-    if (!currentUrl.includes('login.microsoftonline.com')) {
+    if (!isMicrosoftLoginUrl(currentUrl)) {
       console.log('Redirected away from Microsoft login.')
       return
     }
