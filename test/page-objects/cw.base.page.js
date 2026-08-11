@@ -19,9 +19,9 @@ export default class CwBasePage {
     await button.click()
   }
 
-  async waitUntilVisible(selector) {
+  async waitUntilVisible(selector, timeout = config.waitforTimeout) {
     const element = await $(`=${selector}`)
-    await element.waitForDisplayed({ timeout: config.waitforTimeout })
+    await element.waitForDisplayed({ timeout })
     return await element.isDisplayed()
   }
 
@@ -65,6 +65,15 @@ export default class CwBasePage {
   async alertText() {
     const alertBox = await $('div[role="alert"]')
     return await alertBox.getText()
+  }
+
+  async getApplicationStatusText() {
+    const statusParagraph = await $(
+      "//div[contains(@class,'app-case-banner')]//p[.//strong[normalize-space()='Status:']]"
+    )
+    await statusParagraph.waitForDisplayed({ timeout: config.waitforTimeout })
+    const text = await statusParagraph.getText()
+    return text.replace(/^Status:\s*/i, '').trim()
   }
 
   async getTaskStatusByName(taskName) {
