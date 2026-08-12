@@ -87,6 +87,7 @@ export async function completeWoodlandFCJourney(appRefNum) {
   await browser.pause(2000)
   const randomNumber = Math.floor(1000000 + Math.random() * 9000000)
 
+  await browser.pause(2000)
   await CwTasksPage.enterText('#value', randomNumber)
   await browser.pause(2000)
   await CwTasksPage.clickButtonByText('Confirm')
