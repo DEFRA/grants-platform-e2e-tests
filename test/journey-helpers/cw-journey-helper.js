@@ -34,6 +34,7 @@ export async function returnWoodlandApplication(appRefNum) {
     }
   )
   expect(await cwPage.getApplicationStatusText()).toBe('Returned to customer')
+  await browser.takeScreenshot()
 }
 
 export async function completeWoodlandJourney(appRefNum) {
