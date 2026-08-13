@@ -1,4 +1,4 @@
-import { browser, expect, $ } from '../utils/test-runtime.js'
+import {browser, expect, $} from '../utils/test-runtime.js'
 import {
   entraLogin,
   isCaseworkerPortalUrl,
@@ -34,6 +34,7 @@ export async function returnWoodlandApplication(appRefNum) {
     }
   )
   expect(await cwPage.getApplicationStatusText()).toBe('Returned to customer')
+  await browser.takeScreenshot()
 }
 
 export async function completeWoodlandJourney(appRefNum) {
@@ -70,7 +71,7 @@ export async function completeWoodlandJourney(appRefNum) {
   expect(await CWAgreementsPage.getFirstAgreementStatusText()).toBe('Offered')
 
   await browser.takeScreenshot()
-  return { agreementId }
+  return {agreementId}
 }
 
 export async function completeWoodlandFCJourney(appRefNum) {
@@ -95,7 +96,7 @@ export async function completeWoodlandFCJourney(appRefNum) {
 
   // Create CRM record task
   const crmRecordLink = await $('a[href*="TASK_CRM_RECORD_CREATION"]')
-  await crmRecordLink.waitForClickable({ timeout: 10000 })
+  await crmRecordLink.waitForClickable({timeout: 10000})
   await crmRecordLink.scrollIntoView()
   await crmRecordLink.click()
   await browser.pause(2000)
@@ -117,7 +118,7 @@ export async function completeWoodlandFCJourney(appRefNum) {
 
   // FC Review task
   const fcReviewLink = await $('a[href*="TASK_FC_REVIEW_OUTCOME"]')
-  await fcReviewLink.waitForClickable({ timeout: 10000 })
+  await fcReviewLink.waitForClickable({timeout: 10000})
   await fcReviewLink.scrollIntoView()
   await fcReviewLink.click()
   await browser.pause(2000)

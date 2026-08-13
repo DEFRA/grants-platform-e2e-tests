@@ -47,7 +47,7 @@ export async function loginAndUpdateWoodlandApplication({
   if (!applicationData) {
     throw new Error('applicationData is required for woodland journey')
   }
-
+  await browser.pause(3000)
   await WoodlandHomePage.openReturnedApplication()
   await loginForReturnedApplication(username, password)
 
