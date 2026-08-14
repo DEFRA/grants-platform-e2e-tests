@@ -1,4 +1,5 @@
 import { $, $$, browser, expect, config } from '../utils/test-runtime.js'
+import { step } from '../utils/report-step.js'
 
 export default class CwBasePage {
   async getHeaderText(selector = 'h1') {
@@ -8,15 +9,19 @@ export default class CwBasePage {
   }
 
   async clickLinkByText(text) {
-    const link = await $(`=${text}`)
-    await link.waitForClickable({ timeout: config.waitforTimeout })
-    await link.click()
+    return step(`Click "${text}" link`, async () => {
+      const link = await $(`=${text}`)
+      await link.waitForClickable({ timeout: config.waitforTimeout })
+      await link.click()
+    })
   }
 
   async clickButtonByText(text) {
-    const button = await $(`button=${text}`)
-    await button.waitForClickable({ timeout: config.waitforTimeout })
-    await button.click()
+    return step(`Click "${text}" button`, async () => {
+      const button = await $(`button=${text}`)
+      await button.waitForClickable({ timeout: config.waitforTimeout })
+      await button.click()
+    })
   }
 
   async waitUntilVisible(selector, timeout = config.waitforTimeout) {
@@ -26,20 +31,22 @@ export default class CwBasePage {
   }
 
   async enterText(selector, value) {
-    const resolvedSelector =
-      selector.startsWith('#') ||
-      selector.startsWith('.') ||
-      selector.startsWith('//')
-        ? selector
-        : `#${selector}`
+    return step(`Enter text into ${selector}`, async () => {
+      const resolvedSelector =
+        selector.startsWith('#') ||
+        selector.startsWith('.') ||
+        selector.startsWith('//')
+          ? selector
+          : `#${selector}`
 
-    const input = await $(resolvedSelector)
+      const input = await $(resolvedSelector)
 
-    await input.waitForDisplayed({ timeout: config.waitforTimeout })
-    await input.waitForEnabled({ timeout: config.waitforTimeout })
+      await input.waitForDisplayed({ timeout: config.waitforTimeout })
+      await input.waitForEnabled({ timeout: config.waitforTimeout })
 
-    await input.clearValue()
-    await input.setValue(value)
+      await input.clearValue()
+      await input.setValue(value)
+    })
   }
 
   async getInputValue(selector) {
@@ -99,8 +106,10 @@ export default class CwBasePage {
   }
 
   async selectRadioByValue(value) {
-    const radio = await $(`input[type="radio"][value="${value}"]`)
-    await radio.click()
+    return step(`Select radio "${value}"`, async () => {
+      const radio = await $(`input[type="radio"][value="${value}"]`)
+      await radio.click()
+    })
   }
 
   async setCheckbox(selector) {

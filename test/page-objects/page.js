@@ -1,4 +1,5 @@
 import { browser, $ } from '../utils/test-runtime.js'
+import { step } from '../utils/report-step.js'
 
 class Page {
   get pageHeading() {
@@ -6,7 +7,7 @@ class Page {
   }
 
   open(path) {
-    return browser.url(path)
+    return step(`Open ${path}`, () => browser.url(path))
   }
 
   async clickButton(selector) {

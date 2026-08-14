@@ -1,6 +1,7 @@
 import { browser, $, expect } from '../utils/test-runtime.js'
 import LoginPage from '../page-objects/login.page.js'
 import WoodlandHomePage from '../page-objects/woodland.home.page.js'
+import { step } from '../utils/report-step.js'
 
 const RETURNED_APPLICATION_HEADING =
   'Your application has been returned to you to make amendments'
@@ -14,7 +15,9 @@ export async function loginAndRunWoodlandManagementJourney({
   applicationData
 }) {
   await WoodlandHomePage.open()
-  await loginAndValidate(username, password)
+  await step('Wait for login or check-details page', async () => {
+    await loginAndValidate(username, password)
+  })
 
   if (!applicationData) {
     throw new Error('applicationData is required for woodland journey')
@@ -25,15 +28,16 @@ export async function loginAndRunWoodlandManagementJourney({
   await WoodlandHomePage.completeWoodlandDetails(applicationData)
   await WoodlandHomePage.submitApplication()
 
-  // ── Confirmation ───────────────────────────────────────────────────────────
-  await browser.waitUntil(
-    async () => (await browser.getUrl()).includes('/woodland/confirmation'),
-    { timeout: 30000, timeoutMsg: 'Woodland confirmation page did not load' }
-  )
+  return step('Read application reference from confirmation page', async () => {
+    await browser.waitUntil(
+      async () => (await browser.getUrl()).includes('/woodland/confirmation'),
+      { timeout: 30000, timeoutMsg: 'Woodland confirmation page did not load' }
+    )
 
-  const appRefNum = await WoodlandHomePage.getApplicationReference()
-  await browser.takeScreenshot()
-  return { appRefNum }
+    const appRefNum = await WoodlandHomePage.getApplicationReference()
+    await browser.takeScreenshot()
+    return { appRefNum }
+  })
 }
 
 /**
@@ -49,11 +53,15 @@ export async function loginAndUpdateWoodlandApplication({
   }
   await browser.pause(3000)
   await WoodlandHomePage.openReturnedApplication()
-  await loginForReturnedApplication(username, password)
+  await step('Wait for login or returned-to-customer page', async () => {
+    await loginForReturnedApplication(username, password)
+  })
 
-  const returnedHeading = await $('h1.govuk-heading-l')
-  await returnedHeading.waitForDisplayed({ timeout: 50000 })
-  expect(await returnedHeading.getText()).toBe(RETURNED_APPLICATION_HEADING)
+  await step(`Confirm heading: ${RETURNED_APPLICATION_HEADING}`, async () => {
+    const returnedHeading = await $('h1.govuk-heading-l')
+    await returnedHeading.waitForDisplayed({ timeout: 50000 })
+    expect(await returnedHeading.getText()).toBe(RETURNED_APPLICATION_HEADING)
+  })
 
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.updateWoodlandOverTenYearsOld(
@@ -63,14 +71,22 @@ export async function loginAndUpdateWoodlandApplication({
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.clickButton('Confirm and submit')
 
-  await browser.waitUntil(
-    async () => (await browser.getUrl()).includes('/woodland/confirmation'),
-    { timeout: 30000, timeoutMsg: 'Woodland confirmation page did not load' }
-  )
+  return step(
+    'Read updated application reference from confirmation page',
+    async () => {
+      await browser.waitUntil(
+        async () => (await browser.getUrl()).includes('/woodland/confirmation'),
+        {
+          timeout: 30000,
+          timeoutMsg: 'Woodland confirmation page did not load'
+        }
+      )
 
-  const newAppRefNum = await WoodlandHomePage.getApplicationReference()
-  await browser.takeScreenshot()
-  return { newAppRefNum }
+      const newAppRefNum = await WoodlandHomePage.getApplicationReference()
+      await browser.takeScreenshot()
+      return { newAppRefNum }
+    }
+  )
 }
 
 async function waitForLoginPageOrCheckDetails() {
