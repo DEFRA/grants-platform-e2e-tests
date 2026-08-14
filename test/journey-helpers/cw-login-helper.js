@@ -1,4 +1,5 @@
 import { $, browser } from '../utils/test-runtime.js'
+import { step } from '../utils/report-step.js'
 
 const ENTRA_LOGIN_FIELD_TIMEOUT = 50000
 const CW_PORTAL_DOMAIN = 'fg-cw-frontend'
@@ -23,14 +24,16 @@ function isMicrosoftLoginUrl(url) {
 export { isCaseworkerPortalUrl }
 
 export async function entraLogin(username, password) {
-  if (isCaseworkerPortalUrl(await browser.getUrl())) {
-    console.log('Already on caseworker portal — skipping Entra ID login')
-    return
-  }
+  return step('Entra ID login to caseworker portal', async () => {
+    if (isCaseworkerPortalUrl(await browser.getUrl())) {
+      console.log('Already on caseworker portal — skipping Entra ID login')
+      return
+    }
 
-  await performLogin(username, password)
-  await waitForAppLoadOrRetry(username, password)
-  console.log(`Entra ID login successful for ${username}`)
+    await performLogin(username, password)
+    await waitForAppLoadOrRetry(username, password)
+    console.log(`Entra ID login successful for ${username}`)
+  })
 }
 
 export async function waitForCaseworkerPortalOrLogin() {

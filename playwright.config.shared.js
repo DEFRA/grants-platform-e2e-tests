@@ -43,7 +43,10 @@ export function createPlaywrightConfig({
     retries: 0,
     reporter: [
       ['list'],
-      ['allure-playwright', { resultsDir: 'allure-results' }],
+      [
+        'allure-playwright',
+        { resultsDir: 'allure-results', detail: false, suiteTitle: false }
+      ],
       ['json', { outputFile: 'test-results/results.json' }]
     ],
     globalTeardown: path.join(__dirname, 'test/utils/global-teardown.js'),

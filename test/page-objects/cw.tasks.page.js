@@ -1,5 +1,6 @@
 import BasePage from '../page-objects/cw.base.page.js'
 import { $ } from '../utils/test-runtime.js'
+import { step } from '../utils/report-step.js'
 
 class CWTasksPage extends BasePage {
   async approvalNotes(actionCode) {
@@ -21,10 +22,12 @@ class CWTasksPage extends BasePage {
   }
 
   async handleTask(taskName, radioValue) {
-    await this.clickLinkByText(taskName)
-    await this.selectRadioByValue(radioValue)
-    await this.approvalNotes(radioValue)
-    await this.clickButtonByText('Confirm')
+    return step(`Complete task "${taskName}"`, async () => {
+      await this.clickLinkByText(taskName)
+      await this.selectRadioByValue(radioValue)
+      await this.approvalNotes(radioValue)
+      await this.clickButtonByText('Confirm')
+    })
   }
 
   async confirmTask(taskName) {
