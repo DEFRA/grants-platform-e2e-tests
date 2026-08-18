@@ -1,11 +1,15 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
-  loginAndCompleteGrasslandCheckBeforeYouStartQuestions,
+  loginAndCompleteGrasslandTasklistQuestions,
   selectLandParcelAndVerifyOnActionsPage,
   selectLandActionsAndReturnToTasks,
   checkAnswersAndSubmitApplication
 } from '../../journey-helpers/grassland-journey-helper.js'
 import Backend from '../../utils/backend.js'
+import {
+  loginToCwAndOpenCase,
+  verifyCaseApplicationActions
+} from '~/test/journey-helpers/cw-journey-helper.js'
 
 test.afterEach(async ({ context }) => {
   await context.clearCookies()
@@ -32,7 +36,7 @@ test.describe('Multi actions journey', () => {
     console.log('Grassland application state cleared')
 
     await test.step('Farmer completes Check before you start task list questions on grasslands', async () => {
-      await loginAndCompleteGrasslandCheckBeforeYouStartQuestions({
+      await loginAndCompleteGrasslandTasklistQuestions({
         username,
         password
       })
@@ -45,7 +49,7 @@ test.describe('Multi actions journey', () => {
       })
     })
 
-    await test.step('And selects multiple actions and its quantities', async () => {
+    await test.step('And selects CSAM3, SCR2 and CLIG3 actions and its quantities', async () => {
       await selectLandActionsAndReturnToTasks([
         { code: actionOne, quantity: actionOneArea },
         { code: actionTwo, quantity: actionTwoArea },
@@ -53,8 +57,22 @@ test.describe('Multi actions journey', () => {
       ])
     })
 
-    await test.step('And checks answers then submits the application', async () => {
-      await checkAnswersAndSubmitApplication()
+    const { appRefNum } =
+      await test.step('And checks answers then submits the application', async () => {
+        return checkAnswersAndSubmitApplication()
+      })
+
+    await test.step('Then Case Worker can see the submitted application with parcel and actions', async () => {
+      console.log('Application reference number: ' + appRefNum)
+      await loginToCwAndOpenCase(appRefNum)
+      await verifyCaseApplicationActions({
+        parcelId: selectLandParcel,
+        actions: [
+          { code: actionOne, quantity: actionOneArea },
+          { code: actionTwo, quantity: actionTwoArea },
+          { code: actionThree }
+        ]
+      })
     })
   })
 })

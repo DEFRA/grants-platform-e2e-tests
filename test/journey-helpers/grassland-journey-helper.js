@@ -6,7 +6,7 @@ import { step } from '../utils/report-step.js'
 /**
  * Log in to grasslands and complete the Check before you start questions.
  */
-export async function loginAndCompleteGrasslandCheckBeforeYouStartQuestions({
+export async function loginAndCompleteGrasslandTasklistQuestions({
   username,
   password
 }) {
@@ -55,16 +55,24 @@ export async function selectLandActionsAndReturnToTasks(actions) {
 }
 
 /**
- * Review answers and submit the grasslands application.
+ * Submit the grasslands application and get the application number.
  */
 export async function checkAnswersAndSubmitApplication() {
   await GrasslandPage.checkAnswersAndSubmitApplication()
 
-  // await step('Confirm grasslands confirmation page is shown', async () => {
-  //   await GrasslandPage.waitForUrlIncludes('/grasslands/confirmation')
-  //   expect(await browser.getUrl()).toContain('/grasslands/confirmation')
-  //   await browser.takeScreenshot()
-  // })
+  return step('Read application reference from confirmation page', async () => {
+    await browser.waitUntil(
+      async () => (await browser.getUrl()).includes('/grasslands/confirmation'),
+      {
+        timeout: 30000,
+        timeoutMsg: 'Grasslands confirmation page did not load'
+      }
+    )
+
+    const appRefNum = await GrasslandPage.getApplicationReference()
+    await browser.takeScreenshot()
+    return { appRefNum }
+  })
 }
 
 async function waitForLoginPageOrTasks() {

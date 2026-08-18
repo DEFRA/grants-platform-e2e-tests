@@ -83,6 +83,67 @@ export default class CwBasePage {
     return text.replace(/^Status:\s*/i, '').trim()
   }
 
+  async clickApplicationTab() {
+    return step('Open Application tab', async () => {
+      const applicationTab = await $(
+        'a.govuk-service-navigation__link[href*="case-details"]'
+      )
+      await applicationTab.waitForClickable({ timeout: config.waitforTimeout })
+      await applicationTab.click()
+
+      await browser.waitUntil(
+        async () => (await browser.getUrl()).includes('/case-details'),
+        {
+          timeout: 50000,
+          timeoutMsg:
+            'Case details page did not load after clicking Application'
+        }
+      )
+    })
+  }
+
+  async verifyParcelActions(parcelId, actions) {
+    return step(
+      `Verify parcel ${parcelId} actions on case details`,
+      async () => {
+        const main = await $('main')
+        await main.waitForDisplayed({ timeout: config.waitforTimeout })
+        const pageText = await main.getText()
+        const parcelIdWithSpace = parcelId.replace('-', ' ')
+
+        expect(
+          pageText.includes(parcelId) || pageText.includes(parcelIdWithSpace)
+        ).toBe(true)
+
+        for (const { code, quantity } of actions) {
+          await step(`Verify action ${code} is shown`, async () => {
+            const row = await $(
+              `//h3[normalize-space()='Actions']/following::table[contains(@class,'govuk-table')][1]//tr[.//span[normalize-space()='${code}']]`
+            )
+            await row.waitForDisplayed({
+              timeout: config.waitforTimeout,
+              timeoutMsg: `Action "${code}" was not shown on case details`
+            })
+
+            const rowText = await row.getText()
+            expect(rowText).toContain(code)
+            expect(rowText).toContain('ha')
+
+            if (
+              quantity !== undefined &&
+              quantity !== null &&
+              quantity !== ''
+            ) {
+              expect(rowText).toContain(String(quantity))
+            }
+          })
+        }
+
+        await browser.takeScreenshot()
+      }
+    )
+  }
+
   async getTaskStatusByName(taskName) {
     const taskElements = await $$('[data-testid="taskList-li"]')
     const foundTasks = []

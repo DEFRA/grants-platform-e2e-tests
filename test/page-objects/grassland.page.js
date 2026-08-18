@@ -85,7 +85,11 @@ class GrasslandPage extends Page {
         }).toPass({ timeout: 30000 })
 
         const selectedText = await selectedParcelDetails.innerText()
-        playwrightExpect(selectedText).toContain(parcelId)
+        const parcelIdWithSpace = parcelId.replace('-', ' ')
+        playwrightExpect(
+          selectedText.includes(parcelId) ||
+            selectedText.includes(parcelIdWithSpace)
+        ).toBe(true)
         playwrightExpect(selectedText).toContain(`${area} hectares`)
       }
     )
@@ -131,32 +135,34 @@ class GrasslandPage extends Page {
       for (let index = 0; index < actions.length; index++) {
         const { code, quantity } = actions[index]
         const nextAction = actions[index + 1]
+        const hasQuantity =
+          quantity !== undefined && quantity !== null && quantity !== ''
 
         await step(
-          quantity
+          hasQuantity
             ? `Select ${code} and enter ${quantity} ha`
             : `Select ${code}`,
           async () => {
             await this.waitForActionEnabled(code)
-            await this.selectActionCheckbox(code)
 
-            if (
-              quantity !== undefined &&
-              quantity !== null &&
-              quantity !== ''
-            ) {
+            if (hasQuantity) {
+              await this.selectActionCheckbox(code)
               await this.enterActionQuantity(code, quantity)
 
-              // Entering a quantity refreshes available areas; wait until
-              // the next action is selectable again before continuing.
               if (nextAction) {
-                await this.waitForActionEnabled(nextAction.code)
+                await this.waitForActionAvailable(nextAction.code)
               }
+            } else {
+              await this.selectActionAndWaitForRefresh(code)
             }
           }
         )
       }
 
+      // Checking a "total" action like CLIG3 recalculates remaining land
+      // and disables the other checkboxes. Disabled fields are omitted
+      // from submit, so re-enable and restore values just before save.
+      await this.prepareFormForSubmit(actions)
       await this.clickButton('Save and continue')
       await this.waitForTasksPage()
     })
@@ -168,52 +174,159 @@ class GrasslandPage extends Page {
     )
   }
 
+  visibleQuantityInput(actionCode) {
+    return getPage().locator(
+      `input.govuk-input[name="landActionQuantity_${actionCode}"]:not([type="hidden"])`
+    )
+  }
+
+  actionItem(actionCode) {
+    return getPage().locator(
+      `.govuk-checkboxes__item:has(input[name="landAction"][value="${actionCode}"])`
+    )
+  }
+
+  waitForActionsApiResponse(matchPlannedAction) {
+    return getPage().waitForResponse(
+      async (response) => {
+        if (
+          !response.url().includes('/api/land-grants/actions/') ||
+          response.request().method() !== 'POST' ||
+          !response.ok()
+        ) {
+          return false
+        }
+
+        if (!matchPlannedAction) {
+          return true
+        }
+
+        try {
+          const body = response.request().postDataJSON()
+          return Boolean(body?.plannedActions?.some(matchPlannedAction))
+        } catch {
+          return false
+        }
+      },
+      { timeout: 50000 }
+    )
+  }
+
   async waitForActionEnabled(actionCode) {
     const checkbox = this.actionCheckbox(actionCode)
     await checkbox.waitFor({ state: 'attached', timeout: 50000 })
     await playwrightExpect(checkbox).toBeEnabled({ timeout: 50000 })
   }
 
-  async selectActionCheckbox(actionCode) {
-    const page = getPage()
-    const checkbox = this.actionCheckbox(actionCode)
+  async waitForActionAvailable(actionCode) {
+    await this.waitForActionEnabled(actionCode)
 
+    await playwrightExpect(async () => {
+      const itemText = await this.actionItem(actionCode).innerText()
+      playwrightExpect(itemText).not.toContain(
+        'Not compatible with other selected actions'
+      )
+    }).toPass({ timeout: 50000 })
+  }
+
+  async selectActionCheckbox(actionCode) {
+    const checkbox = this.actionCheckbox(actionCode)
     await checkbox.waitFor({ state: 'attached', timeout: 50000 })
 
-    if (!(await checkbox.isChecked())) {
-      // GOV.UK visually hides the input; click its label so the
-      // conditional quantity panel is revealed via aria-controls.
-      const checkboxId = await checkbox.getAttribute('id')
-      const label = checkboxId
-        ? page.locator(`label[for="${checkboxId}"]`).first()
-        : checkbox.locator('xpath=following-sibling::label[1]')
-
-      await label.click()
+    if (await checkbox.isChecked()) {
+      return
     }
 
+    // Click the label that belongs to this checkbox. Avoid label[for=id]
+    // because the first action uses id="landAction" and that can match
+    // the wrong control.
+    const label = checkbox.locator(
+      'xpath=following-sibling::label[contains(@class,"govuk-checkboxes__label")][1]'
+    )
+    await label.click()
     await playwrightExpect(checkbox).toBeChecked({ timeout: 50000 })
   }
 
+  async selectActionAndWaitForRefresh(actionCode) {
+    const responsePromise = this.waitForActionsApiResponse(
+      (action) => action.actionCode === actionCode
+    )
+    await this.selectActionCheckbox(actionCode)
+    await responsePromise
+  }
+
   async enterActionQuantity(actionCode, quantity) {
-    const checkbox = this.actionCheckbox(actionCode)
-    const controlsId =
-      (await checkbox.getAttribute('aria-controls')) ||
-      (await checkbox.getAttribute('data-aria-controls'))
-
-    // Prefer the GOV.UK conditional panel. Avoid bare #landActionQuantity_*
-    // because a hidden tracker input can share that id and match first.
-    const quantityInput = controlsId
-      ? getPage().locator(
-          `#${controlsId} input.govuk-input[name="landActionQuantity_${actionCode}"]`
-        )
-      : getPage().locator(
-          `input.govuk-input[name="landActionQuantity_${actionCode}"]:not([type="hidden"])`
-        )
-
+    const quantityInput = this.visibleQuantityInput(actionCode)
     await quantityInput.waitFor({ state: 'visible', timeout: 50000 })
+    await quantityInput.click()
+
+    const responsePromise = this.waitForActionsApiResponse(
+      (action) =>
+        action.actionCode === actionCode &&
+        Number(action.quantity) === Number(quantity)
+    )
     await quantityInput.fill(String(quantity))
-    // Blur so the page recalculates remaining area and refreshes actions.
-    await quantityInput.blur()
+    await quantityInput.press('Tab')
+    await responsePromise
+
+    await playwrightExpect(this.actionCheckbox(actionCode)).toBeChecked()
+    await playwrightExpect(this.visibleQuantityInput(actionCode)).toHaveValue(
+      String(quantity)
+    )
+  }
+
+  async prepareFormForSubmit(actions) {
+    return step('Restore selected actions so they are submitted', async () => {
+      await getPage().evaluate((selectedActions) => {
+        const entered = selectedActions.filter(
+          (action) =>
+            action.quantity !== undefined &&
+            action.quantity !== null &&
+            action.quantity !== ''
+        )
+        const totalAvailable = Number(
+          document
+            .querySelector(
+              'input[name="landAction"][data-total-available-area]'
+            )
+            ?.getAttribute('data-total-available-area') || 0
+        )
+        const enteredTotal = entered.reduce(
+          (sum, action) => sum + Number(action.quantity),
+          0
+        )
+        const remaining = Number((totalAvailable - enteredTotal).toFixed(4))
+
+        for (const action of selectedActions) {
+          const checkbox = document.querySelector(
+            `input[name="landAction"][value="${action.code}"]`
+          )
+
+          if (!checkbox) {
+            throw new Error(`Action checkbox "${action.code}" was not found`)
+          }
+
+          checkbox.disabled = false
+          checkbox.removeAttribute('disabled')
+          checkbox.checked = true
+
+          const value =
+            action.quantity !== undefined &&
+            action.quantity !== null &&
+            action.quantity !== ''
+              ? String(action.quantity)
+              : String(remaining)
+
+          document
+            .querySelectorAll(`input[name="landActionQuantity_${action.code}"]`)
+            .forEach((input) => {
+              input.disabled = false
+              input.removeAttribute('disabled')
+              input.value = value
+            })
+        }
+      }, actions)
+    })
   }
 
   async clickTask(taskName) {
@@ -257,6 +370,14 @@ class GrasslandPage extends Page {
       })
       await button.click()
     })
+  }
+
+  async getApplicationReference() {
+    const refNumberEl = await $(
+      '.govuk-panel--confirmation .govuk-panel__body strong'
+    )
+    await refNumberEl.waitForDisplayed({ timeout: 50000 })
+    return (await refNumberEl.getText()).trim().toLowerCase()
   }
 
   async checkAnswersAndSubmitApplication() {

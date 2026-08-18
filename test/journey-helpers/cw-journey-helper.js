@@ -163,7 +163,7 @@ export async function completeWoodlandFCJourney(appRefNum) {
   })
 }
 
-async function loginToCwAndOpenCase(appRefNum) {
+export async function loginToCwAndOpenCase(appRefNum) {
   return step(
     `Login to caseworker portal and open case ${appRefNum}`,
     async () => {
@@ -202,4 +202,12 @@ async function loginToCwAndOpenCase(appRefNum) {
       await browser.pause(5000)
     }
   )
+}
+
+/**
+ * Open the Application tab and verify parcel actions and quantities.
+ */
+export async function verifyCaseApplicationActions({ parcelId, actions }) {
+  await cwPage.clickApplicationTab()
+  await cwPage.verifyParcelActions(parcelId, actions)
 }
