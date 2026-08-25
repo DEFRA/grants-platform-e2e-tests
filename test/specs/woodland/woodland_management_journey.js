@@ -7,16 +7,16 @@ import { loginAndRunWoodlandManagementJourney } from '../../journey-helpers/wood
 import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreement-journey-helper.js'
 import Backend from '../../utils/backend.js'
 
+const crn = '1106298365'
+test.use({ crn })
+
 test.afterEach(async ({ context }) => {
   await context.clearCookies()
 })
 
 test.describe('Woodland Management Plan Happy E2E path', () => {
   test('The farmer is able to complete the woodland Management Plan application', async () => {
-    const testUser = {
-      username: '1106298365',
-      password: process.env.DEFRA_ID_USER_PASSWORD
-    }
+    const password = process.env.DEFRA_ID_USER_PASSWORD
 
     const woodlandApplicationData = {
       landParcelId: 'NT8701-9412',
@@ -26,7 +26,6 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
       fcTeamCodeId: 'fcTeamCode-2'
     }
 
-    const { username, password } = testUser
     const sbi = '106480734'
     await Backend.clearTestData(sbi, 'woodland')
     console.log('woodland application state cleared')
@@ -34,7 +33,7 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
     const { appRefNum } =
       await test.step('Farmer submits the woodland Application', async () => {
         return loginAndRunWoodlandManagementJourney({
-          username,
+          username: crn,
           password,
           applicationData: woodlandApplicationData
         })
@@ -45,7 +44,7 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
       const { agreementId } = await completeWoodlandJourney(appRefNum)
 
       console.log('Agreement ID: ' + agreementId)
-      await completeWoodlandAgreementJourney(agreementId, username, password)
+      await completeWoodlandAgreementJourney(agreementId, crn, password)
 
       await completeWoodlandFCJourney(appRefNum)
     })

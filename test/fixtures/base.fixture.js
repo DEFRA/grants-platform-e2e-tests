@@ -4,6 +4,7 @@ import * as allure from 'allure-js-commons'
 import { test as base } from '@playwright/test'
 import { initBridge, clearBridge } from '../utils/playwright-bridge.js'
 import { loadTestConfig } from '../utils/test-config.js'
+import { acquireSerialLock, releaseSerialLock } from '../utils/serial-lock.js'
 
 export { expect } from '../utils/playwright-bridge.js'
 
@@ -16,6 +17,10 @@ function formatSuiteName(folderName) {
 }
 
 export const test = base.extend({
+  // Specs that share a farmer CRN must not overlap. Set this in each spec:
+  //   const crn = '1106298365'
+  //   test.use({ crn })
+  crn: [undefined, { option: true }],
   bridge: [
     async ({ page, context }, use) => {
       const profile = process.env.PLAYWRIGHT_PROFILE || 'local'
@@ -39,6 +44,18 @@ export const test = base.extend({
       }
 
       await use()
+    },
+    { auto: true }
+  ],
+  crnSerialGate: [
+    async ({ crn }, use) => {
+      const lockKey = crn || 'unscoped'
+      await acquireSerialLock(lockKey)
+      try {
+        await use()
+      } finally {
+        await releaseSerialLock(lockKey)
+      }
     },
     { auto: true }
   ]

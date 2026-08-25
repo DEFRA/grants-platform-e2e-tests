@@ -101,6 +101,24 @@ See `compose.yml` for infrastructure setup (mongodb, redis, localstack).
 
 URL configuration is resolved in `test/utils/test-config.js` based on the active profile (`cdp`, `local`, `github`).
 
+### Parallel runs
+
+CDP and GitHub configs use 3 workers so specs with **different farmer CRNs** can overlap. Specs that share a CRN wait on a lock and stay serial. Local runs stay on 1 worker by default.
+
+Set a CRN at the top of each spec:
+
+```js
+const crn = '1106298365'
+test.use({ crn })
+```
+
+Override workers with `PW_WORKERS`:
+
+```bash
+PW_WORKERS=1 npm test
+PW_WORKERS=3 npm run test:local
+```
+
 ## Test Specs
 
 | Spec                             | Description                           |

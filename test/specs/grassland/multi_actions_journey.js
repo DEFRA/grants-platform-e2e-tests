@@ -11,16 +11,16 @@ import {
   verifyCaseApplicationActions
 } from '~/test/journey-helpers/cw-journey-helper.js'
 
+const crn = '1102838829'
+test.use({ crn })
+
 test.afterEach(async ({ context }) => {
   await context.clearCookies()
 })
 
 test.describe('Multi actions journey', () => {
   test('The farmer can apply for multiple actions on selected land parcel', async () => {
-    const testUser = {
-      username: '1102838829',
-      password: process.env.DEFRA_ID_USER_PASSWORD
-    }
+    const password = process.env.DEFRA_ID_USER_PASSWORD
 
     const selectLandParcel = 'SD6843-2122'
     const totalParcelArea = '6.7943'
@@ -30,14 +30,13 @@ test.describe('Multi actions journey', () => {
     const actionTwoArea = '2'
     const actionThree = 'CLIG3'
 
-    const { username, password } = testUser
     const sbi = '106284736'
     await Backend.clearTestData(sbi, 'grasslands')
     console.log('Grassland application state cleared')
 
     await test.step('Farmer completes Check before you start task list questions on grasslands', async () => {
       await loginAndCompleteGrasslandTasklistQuestions({
-        username,
+        username: crn,
         password
       })
     })

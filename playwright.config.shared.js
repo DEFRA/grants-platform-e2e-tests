@@ -6,6 +6,18 @@ import { defineConfig, devices } from '@playwright/test'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const fiveMinutes = 5 * 60 * 1000
 
+function resolveWorkerCount(profile) {
+  const fromEnv = Number(process.env.PW_WORKERS)
+
+  if (Number.isFinite(fromEnv) && fromEnv > 0) {
+    return fromEnv
+  }
+
+  // Local headed runs stay serial by default. CI / CDP / GitHub can overlap
+  // specs that use different farmer CRNs.
+  return profile === 'local' ? 1 : 3
+}
+
 export function createPlaywrightConfig({
   profile,
   timeout = fiveMinutes,
@@ -35,7 +47,7 @@ export function createPlaywrightConfig({
     testDir: path.join(__dirname, 'test/specs'),
     testMatch: '**/*.js',
     fullyParallel: false,
-    workers: 1,
+    workers: resolveWorkerCount(profile),
     timeout,
     expect: {
       timeout: 10000
