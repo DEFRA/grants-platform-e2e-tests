@@ -18,4 +18,6 @@ This repository contains Playwright end-to-end tests for the Woodland Management
 
 Tests use Playwright Test with a page object model. Specs import `test` and `expect` from `test/fixtures/base.fixture.js`. Page objects and helpers use `test/utils/test-runtime.js`, which exposes WDIO-compatible `$`, `$$`, `browser`, and `expect` APIs backed by Playwright.
 
+CI uses multiple workers. Specs declare `test.use({ crn: '...' })` so journeys that share a farmer CRN stay serial while different CRNs can run in parallel. Override with `PW_WORKERS`.
+
 Run `npm run lint` and the relevant Playwright command before opening a PR. When debugging locally, set `ENVIRONMENT` and credentials in `.env`, run `npm run setup:browsers`, then `npm run test:local`.
