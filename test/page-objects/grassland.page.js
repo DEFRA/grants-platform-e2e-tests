@@ -164,7 +164,6 @@ class GrasslandPage extends Page {
       // from submit, so re-enable and restore values just before save.
       await this.prepareFormForSubmit(actions)
       await this.clickButton('Save and continue')
-      await this.waitForTasksPage()
     })
   }
 

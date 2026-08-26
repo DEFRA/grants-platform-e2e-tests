@@ -47,6 +47,14 @@ export async function selectLandParcelAndVerifyOnActionsPage({
 export async function selectLandActionsAndReturnToTasks(actions) {
   await GrasslandPage.selectActionsWithQuantities(actions)
 
+  await step('Confirm land and actions page is shown', async () => {
+    expect(await browser.getUrl()).toContain(
+      '/grasslands/confirm-land-and-actions'
+    )
+    await GrasslandPage.clickSaveAndContinue()
+    await browser.takeScreenshot()
+  })
+
   await step('Confirm grasslands tasks page is shown', async () => {
     await GrasslandPage.waitForTasksPage()
     expect(await browser.getUrl()).toContain('/grasslands/tasks')
