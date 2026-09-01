@@ -10,6 +10,7 @@ Playwright end-to-end test suite for grants platform journeys.
 - [Production](#production)
 - [Running on GitHub](#running-on-github)
 - [Playwright configurations](#playwright-configurations)
+- [Test specs](#test-specs)
 - [Licence](#licence)
 
 ## Local Development
@@ -55,7 +56,7 @@ npm run test:local
 Run a single spec without cleaning reports:
 
 ```bash
-npm run test:local:spec -- test/specs/woodland_management_journey.js
+npm run test:local:spec -- test/specs/woodland/woodland_management_journey.js
 ```
 
 ### Debugging local tests
@@ -119,8 +120,18 @@ PW_WORKERS=1 npm test
 PW_WORKERS=3 npm run test:local
 ```
 
-## Test Specs
+## Test specs
 
-| Spec                             | Description                           |
-| -------------------------------- | ------------------------------------- |
-| `woodland_management_journey.js` | Woodland Management Plan full journey |
+Specs live under `test/specs/`, grouped by journey type:
+
+```
+test/specs/
+├── grassland/   # Grasslands grant application journeys
+└── woodland/    # Woodland Management Plan journeys
+```
+
+Run a single spec:
+
+```bash
+npm run test:local:spec -- test/specs/grassland/multi_actions_journey.js
+```
