@@ -19,7 +19,7 @@ class GrasslandPage extends Page {
 
   async completeCheckBeforeYouStartQuestions() {
     const tasks = [
-      'Are these details correct?',
+      'Check your details',
       'Confirm your land details are up to date',
       'Confirm management control of the land'
     ]
@@ -37,7 +37,9 @@ class GrasslandPage extends Page {
   }
 
   async clickSelectLandAndActions() {
-    return this.clickTask('Select the land and actions you want to apply for')
+    return this.clickTask(
+      'Select the land and the actions you want to apply for'
+    )
   }
 
   async selectParcelOnMap(parcelId, areaHa) {
@@ -386,7 +388,7 @@ class GrasslandPage extends Page {
       await this.clickButton('Continue')
 
       await this.waitForUrlIncludes('/grasslands/declaration')
-      await this.clickButton('Confirm and submit')
+      await this.clickButton('I agree - submit my application')
     })
   }
 
