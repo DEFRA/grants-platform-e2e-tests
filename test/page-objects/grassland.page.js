@@ -48,13 +48,23 @@ class GrasslandPage extends Page {
       async () => {
         const page = getPage()
         const area = Number(areaHa)
+        const mapLoadTimeout = 60000
+
+        // Wait for the map element and land parcel summary before selecting.
+        // Dispatching too early can leave Available actions at 0.
+        await page
+          .locator('#parcel-map')
+          .waitFor({ state: 'visible', timeout: mapLoadTimeout })
+
+        await playwrightExpect(async () => {
+          const pageText = await page.locator('main').innerText()
+          playwrightExpect(pageText).toMatch(/Available land parcels\s+\d+/)
+        }).toPass({ timeout: mapLoadTimeout })
 
         // The page's parcel-map:selection listener is attached as soon as
         // parcel-select-page.js runs, but the element can be attached before
         // that listener is wired up, so a single dispatch can be dropped.
-        // Retry until #selected-parcel-details becomes visible.
-        await page.locator('#parcel-map').waitFor({ state: 'attached' })
-
+        // Retry until #selected-parcel-details becomes visible with actions.
         const dispatchSelection = () =>
           page.evaluate(
             ({ id, areaHa: selectedArea }) => {
@@ -84,7 +94,13 @@ class GrasslandPage extends Page {
           await playwrightExpect(selectedParcelDetails).toBeVisible({
             timeout: 1000
           })
-        }).toPass({ timeout: 30000 })
+
+          const selectedText = await selectedParcelDetails.innerText()
+          playwrightExpect(selectedText).not.toContain(
+            'There are no actions available for this land parcel'
+          )
+          playwrightExpect(selectedText).toMatch(/Available actions\s+[1-9]/)
+        }).toPass({ timeout: mapLoadTimeout })
 
         const selectedText = await selectedParcelDetails.innerText()
         const parcelIdWithSpace = parcelId.replace('-', ' ')
@@ -92,7 +108,7 @@ class GrasslandPage extends Page {
           selectedText.includes(parcelId) ||
             selectedText.includes(parcelIdWithSpace)
         ).toBe(true)
-        playwrightExpect(selectedText).toContain(`${area} hectares`)
+        playwrightExpect(selectedText).toContain(`${area} ha`)
       }
     )
   }
@@ -111,6 +127,8 @@ class GrasslandPage extends Page {
         await this.waitForUrlIncludes(
           `/grasslands/select-actions-for-land-parcel?parcelId=${parcelId}`
         )
+
+        await this.waitForAvailableActionsReady()
 
         const area = Number(areaHa)
         const pageText = await (await $('main')).getText()
@@ -133,6 +151,7 @@ class GrasslandPage extends Page {
       await this.waitForUrlIncludes(
         '/grasslands/select-actions-for-land-parcel'
       )
+      await this.waitForAvailableActionsReady()
 
       for (let index = 0; index < actions.length; index++) {
         const { code, quantity } = actions[index]
@@ -167,6 +186,19 @@ class GrasslandPage extends Page {
       await this.prepareFormForSubmit(actions)
       await this.clickButton('Save and continue')
     })
+  }
+
+  async waitForAvailableActionsReady() {
+    await playwrightExpect(async () => {
+      const pageText = await getPage().locator('main').innerText()
+      playwrightExpect(pageText).toContain('Available actions')
+      playwrightExpect(pageText).not.toContain(
+        'Updating available land for this action'
+      )
+      playwrightExpect(pageText).not.toContain(
+        'There are no actions available for this land parcel'
+      )
+    }).toPass({ timeout: 60000 })
   }
 
   actionCheckbox(actionCode) {
