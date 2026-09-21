@@ -6,11 +6,12 @@ import { step } from '../utils/report-step.js'
 
 export async function completeWoodlandAgreementJourney(
   agreementId,
+  code,
   username,
   password
 ) {
-  await step(`Open agreement ${agreementId}`, async () => {
-    await browser.url(browser.options.agreementsUrl + agreementId)
+  await step(`Open agreement ${agreementId} for ${code}`, async () => {
+    await browser.url(browser.options.agreementsUrl + code)
     await browser.pause(3000)
   })
 

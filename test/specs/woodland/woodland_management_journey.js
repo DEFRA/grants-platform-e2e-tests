@@ -42,9 +42,10 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
     await test.step('CW approves the application along with Agreement and the Forestry Commission journey', async () => {
       console.log('App Ref Num: ' + appRefNum)
       const { agreementId } = await completeWoodlandJourney(appRefNum)
+      const code = 'woodland'
 
       console.log('Agreement ID: ' + agreementId)
-      await completeWoodlandAgreementJourney(agreementId, crn, password)
+      await completeWoodlandAgreementJourney(agreementId, code, crn, password)
 
       await completeWoodlandFCJourney(appRefNum)
     })

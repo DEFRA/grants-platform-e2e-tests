@@ -34,7 +34,7 @@ export function loadTestConfig(
       ...shared,
       baseUrl: grantsUiBase,
       cwUrl: `https://fg-cw-frontend.${environment}.cdp-int.defra.cloud/cases`,
-      agreementsUrl: `${grantsUiBase}/agreement/`,
+      agreementsUrl: `${grantsUiBase}/`,
       gpsUrl: environment
         ? `https://ephemeral-protected.api.${environment}.cdp-int.defra.cloud/grants-payment-service/`
         : undefined,
@@ -49,7 +49,7 @@ export function loadTestConfig(
     ...shared,
     baseUrl: grantsUiBase,
     cwUrl: `https://fg-cw-frontend.${environment}.cdp-int.defra.cloud/cases`,
-    agreementsUrl: `${grantsUiBase}/agreement/`,
+    agreementsUrl: `${grantsUiBase}/`,
     gpsUrl: environment
       ? `https://grants-payment-service.${environment}.cdp-int.defra.cloud/`
       : undefined,
