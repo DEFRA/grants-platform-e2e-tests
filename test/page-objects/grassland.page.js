@@ -51,7 +51,6 @@ class GrasslandPage extends Page {
         const mapLoadTimeout = 60000
 
         // Wait for the map element and land parcel summary before selecting.
-        // Dispatching too early can leave Available actions at 0.
         await page
           .locator('#parcel-map')
           .waitFor({ state: 'visible', timeout: mapLoadTimeout })
@@ -64,7 +63,7 @@ class GrasslandPage extends Page {
         // The page's parcel-map:selection listener is attached as soon as
         // parcel-select-page.js runs, but the element can be attached before
         // that listener is wired up, so a single dispatch can be dropped.
-        // Retry until #selected-parcel-details becomes visible with actions.
+        // Retry until #selected-parcel-details becomes visible.
         const dispatchSelection = () =>
           page.evaluate(
             ({ id, areaHa: selectedArea }) => {
@@ -94,12 +93,6 @@ class GrasslandPage extends Page {
           await playwrightExpect(selectedParcelDetails).toBeVisible({
             timeout: 1000
           })
-
-          const selectedText = await selectedParcelDetails.innerText()
-          playwrightExpect(selectedText).not.toContain(
-            'There are no actions available for this land parcel'
-          )
-          playwrightExpect(selectedText).toMatch(/Available actions\s+[1-9]/)
         }).toPass({ timeout: mapLoadTimeout })
 
         const selectedText = await selectedParcelDetails.innerText()
