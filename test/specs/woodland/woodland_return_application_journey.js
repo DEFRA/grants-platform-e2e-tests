@@ -68,10 +68,10 @@ test.describe('Return Application', () => {
     await test.step('CW approves the application along with the Forestry Commission journey', async () => {
       console.log('New appRefNum: ' + newAppRefNum)
       const { agreementId } = await completeWoodlandJourney(newAppRefNum)
+      const code = 'woodland'
 
       console.log('Agreement ID: ' + agreementId)
-      await completeWoodlandAgreementJourney(agreementId, crn, password)
-
+      await completeWoodlandAgreementJourney(agreementId, code, crn, password)
       await completeWoodlandFCJourney(newAppRefNum)
     })
   })
