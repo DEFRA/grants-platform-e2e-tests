@@ -185,15 +185,29 @@ export async function loginToCwAndOpenCase(appRefNum) {
       await browser.waitUntil(
         async () => {
           try {
-            return await cwPage.waitUntilVisible(appRefNum, 5000)
-          } catch {
+            const isVisible = await cwPage.waitUntilVisible(appRefNum, 5000)
+
+            if (isVisible) {
+              return true
+            }
+
+            // Case not displayed - reload and try again
+            await browser.refresh()
+            await browser.pause(1000)
+
+            return false
+          } catch (error) {
+            // If the case isn't found, reload and try again
+            await browser.refresh()
+            await browser.pause(1000)
+
             return false
           }
         },
         {
           timeout: 60000,
           interval: 3000,
-          timeoutMsg: `Case "${appRefNum}" was not found in caseworker portal`
+          timeoutMsg: `Case "${appRefNum}" was not found in caseworker portal after waiting 60 seconds`
         }
       )
 
