@@ -22,8 +22,8 @@ test.describe('Multi actions journey', () => {
   test('The farmer can apply for multiple actions on selected land parcel', async () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
-    const selectLandParcel = 'SD6843-2122'
-    const totalParcelArea = '6.7943'
+    const selectLandParcel = 'SD6743-6292'
+    const totalParcelArea = '7.5713'
     const actionOne = 'CSAM3'
     const actionOneArea = '3'
     const actionTwo = 'SCR2'
