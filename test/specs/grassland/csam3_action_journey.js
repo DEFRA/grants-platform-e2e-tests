@@ -22,8 +22,8 @@ test.describe('CSAM3 action journey', () => {
   test('Farmer can apply for CSAM3 action on part available area as the only action', async () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
-    const selectLandParcel = 'SD6743-8083'
-    const totalParcelArea = '4.5341'
+    const selectLandParcel = 'NT9802-9709'
+    const totalParcelArea = '14.3442'
     const actionOne = 'CSAM3'
     const actionOneArea = '2.5341'
 
