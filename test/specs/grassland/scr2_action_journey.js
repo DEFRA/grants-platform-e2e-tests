@@ -22,8 +22,8 @@ test.describe('SCR2 action journey', () => {
   test('Farmer can apply for SCR2 action on part available area as the only action', async () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
-    const selectLandParcel = 'SD6843-2122'
-    const totalParcelArea = '6.7943'
+    const selectLandParcel = 'SD6743-6292'
+    const totalParcelArea = '7.5713'
     const actionOne = 'SCR2'
     const actionOneArea = '6'
 
