@@ -58,7 +58,7 @@ test.describe('CLIG3 action journey', () => {
       await loginToCwAndOpenCase(appRefNum)
       await verifyCaseApplicationActions({
         parcelId: selectLandParcel,
-        actions: [{ code: actionOne, quantity: '6.6884' }]
+        actions: [{ code: actionOne, quantity: '7.5713' }]
       })
     })
   })
