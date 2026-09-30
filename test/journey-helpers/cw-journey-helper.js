@@ -133,11 +133,7 @@ export async function completeWoodlandFCJourney(appRefNum) {
   })
 
   await step('Approve Forestry Commission review', async () => {
-    await CwTasksPage.enterText(
-      '#ACTION_APPROVE_FC_REVIEW-comment',
-      "Forestry Commission's decision approved"
-    )
-    await CwTasksPage.clickButtonByText('Approve Forestry Commission review')
+    await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
     await browser.pause(2000)
   })
 
