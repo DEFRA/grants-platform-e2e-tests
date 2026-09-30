@@ -93,18 +93,6 @@ export async function completeWoodlandFCJourney(appRefNum) {
     }
   )
 
-  await step('Add SitiAgri reference', async () => {
-    await CwTasksPage.clickLinkByText('Add SitiAgri Reference')
-    await browser.pause(2000)
-    const randomNumber = Math.floor(1000000 + Math.random() * 9000000)
-
-    await browser.pause(2000)
-    await CwTasksPage.enterText('#value', randomNumber)
-    await browser.pause(2000)
-    await CwTasksPage.clickButtonByText('Confirm')
-    await browser.pause(2000)
-  })
-
   await step('Create CRM record', async () => {
     const crmRecordLink = await $('a[href*="TASK_CRM_RECORD_CREATION"]')
     await crmRecordLink.waitForClickable({ timeout: 10000 })
