@@ -133,8 +133,19 @@ export async function completeWoodlandFCJourney(appRefNum) {
   })
 
   await step('Approve Forestry Commission review', async () => {
-    await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
+    await CwTasksPage.enterText(
+      '#ACTION_APPROVE_FC_REVIEW-comment',
+      "Forestry Commission's decision approved"
+    )
+    await CwTasksPage.clickButtonByText('Approve Forestry Commission review')
+    // await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
     await browser.pause(2000)
+  })
+
+  await step('Assert application status is Accepted', async () => {
+    await browser.pause(2000)
+    expect(await CWAgreementsPage.headerH2()).toBe('Application completed')
+    await browser.takeScreenshot()
   })
 
   await step('Assert agreement status is Accepted', async () => {
