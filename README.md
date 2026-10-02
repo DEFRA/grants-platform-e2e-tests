@@ -53,12 +53,6 @@ Runs against CDP environments using `playwright.local.config.js` (headed Chrome 
 npm run test:local
 ```
 
-Run a single spec without cleaning reports:
-
-```bash
-npm run test:local:spec -- test/specs/woodland/woodland_management_journey.js
-```
-
 ### Debugging local tests
 
 ```bash
@@ -119,6 +113,18 @@ Override workers with `PW_WORKERS`:
 PW_WORKERS=1 npm test
 PW_WORKERS=3 npm run test:local
 ```
+
+### Environment tags
+
+Tag a test (or `test.describe`) so it only runs on a specific `ENVIRONMENT`. Untagged tests run on every environment.
+
+| Tag         | Runs when                   |
+| ----------- | --------------------------- |
+| _(none)_    | All environments            |
+| `@test`     | `ENVIRONMENT=test` only     |
+| `@ext-test` | `ENVIRONMENT=ext-test` only |
+
+Filtering uses Playwright `grepInvert` based on `ENVIRONMENT` from `.env` / CI.
 
 ## Test specs
 

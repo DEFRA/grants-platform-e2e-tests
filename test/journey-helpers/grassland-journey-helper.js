@@ -42,6 +42,13 @@ export async function selectLandParcelAndVerifyOnActionsPage({
 }
 
 /**
+ * Assert an action checkbox is not offered on the select-actions page.
+ */
+export async function verifyActionNotAvailableOnActionsPage(actionCode) {
+  await GrasslandPage.verifyActionNotShown(actionCode)
+}
+
+/**
  * Select actions and quantities, then return to the grasslands tasks page.
  */
 export async function selectLandActionsAndReturnToTasks(actions) {
