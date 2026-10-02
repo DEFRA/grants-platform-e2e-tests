@@ -139,6 +139,18 @@ class GrasslandPage extends Page {
     )
   }
 
+  async verifyActionNotShown(actionCode) {
+    return step(`Verify action ${actionCode} is not shown`, async () => {
+      await this.waitForUrlIncludes(
+        '/grasslands/select-actions-for-land-parcel'
+      )
+      await this.waitForAvailableActionsReady()
+
+      await playwrightExpect(this.actionCheckbox(actionCode)).toHaveCount(0)
+      await browser.takeScreenshot()
+    })
+  }
+
   async selectActionsWithQuantities(actions) {
     return step('Select land actions and quantities', async () => {
       await this.waitForUrlIncludes(

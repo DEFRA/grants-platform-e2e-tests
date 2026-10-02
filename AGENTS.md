@@ -20,4 +20,6 @@ Tests use Playwright Test with a page object model. Specs import `test` and `exp
 
 CI uses multiple workers. Specs declare `test.use({ crn: '...' })` so journeys that share a farmer CRN stay serial while different CRNs can run in parallel. Override with `PW_WORKERS`.
 
+Environment-scoped tags (`@test`, `@ext-test`) limit a test to that `ENVIRONMENT` value; untagged tests run everywhere. Known tags live in `test/utils/environment-tags.js`.
+
 Run `npm run lint` and the relevant Playwright command before opening a PR. When debugging locally, set `ENVIRONMENT` and credentials in `.env`, run `npm run setup:browsers`, then `npm run test:local`.

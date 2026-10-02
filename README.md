@@ -28,6 +28,8 @@ To use the correct version of Node.js for this application, via nvm:
 nvm use
 ```
 
+
+
 ### Setup
 
 Install application dependencies and Playwright browsers:
@@ -53,12 +55,6 @@ Runs against CDP environments using `playwright.local.config.js` (headed Chrome 
 npm run test:local
 ```
 
-Run a single spec without cleaning reports:
-
-```bash
-npm run test:local:spec -- test/specs/woodland/woodland_management_journey.js
-```
-
 ### Debugging local tests
 
 ```bash
@@ -68,6 +64,8 @@ npm run test:local:debug
 Set `HEADLESS=true` to run headless locally. Set `PW_CHANNEL` to override the browser channel (default: `chrome`).
 
 ## Running on CDP
+
+
 
 ### Running the tests
 
@@ -80,6 +78,8 @@ The results of the test run are made available in the portal.
 1. Your service builds as a docker container using the `.github/workflows/publish.yml`
 2. The Dockerfile's entrypoint script should return exit code of 0 if the test suite passes or 1/>0 if it fails
 3. Test reports should be published to S3 using the script in `./bin/publish-tests.sh`
+
+
 
 ## Running on GitHub
 
@@ -94,11 +94,13 @@ See `compose.yml` for infrastructure setup (mongodb, redis, localstack).
 
 ## Playwright Configurations
 
+
 | Config                        | WDIO equivalent       | Script                | Purpose                               |
 | ----------------------------- | --------------------- | --------------------- | ------------------------------------- |
 | `playwright.config.js`        | `wdio.conf.js`        | `npm test`            | CDP Portal / Docker (headless, proxy) |
 | `playwright.local.config.js`  | `wdio.local.conf.js`  | `npm run test:local`  | Local dev against CDP (headed Chrome) |
 | `playwright.github.config.js` | `wdio.github.conf.js` | `npm run test:github` | GitHub Actions / docker-compose       |
+
 
 URL configuration is resolved in `test/utils/test-config.js` based on the active profile (`cdp`, `local`, `github`).
 
@@ -120,6 +122,24 @@ PW_WORKERS=1 npm test
 PW_WORKERS=3 npm run test:local
 ```
 
+
+
+### Environment tags
+
+Tag a test (or `test.describe`) so it only runs on a specific `ENVIRONMENT`. Untagged tests run on every environment.
+
+
+| Tag         | Runs when                   |
+| ----------- | --------------------------- |
+| *(none)*    | All environments            |
+| `@test`     | `ENVIRONMENT=test` only     |
+| `@ext-test` | `ENVIRONMENT=ext-test` only |
+
+
+
+
+Filtering uses Playwright `grepInvert` based on `ENVIRONMENT` from `.env` / CI.
+
 ## Test specs
 
 Specs live under `test/specs/`, grouped by journey type:
@@ -135,3 +155,4 @@ Run a single spec:
 ```bash
 npm run test:local:spec -- test/specs/grassland/multi_actions_journey.js
 ```
+
