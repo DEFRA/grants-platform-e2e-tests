@@ -127,7 +127,7 @@ export default class CwBasePage {
 
             const rowText = await row.getText()
             expect(rowText).toContain(code)
-            expect(/\b(ha|count|ponds)\b/.test(rowText)).toBe(true)
+            expect(/\b(ha|count|ponds|sqm)\b/.test(rowText)).toBe(true)
 
             if (
               quantity !== undefined &&
