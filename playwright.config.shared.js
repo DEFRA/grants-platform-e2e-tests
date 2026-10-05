@@ -2,7 +2,10 @@ import './test/utils/load-env.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
-import { resolveEnvironmentGrepInvert } from './test/utils/environment-tags.js'
+import {
+  resolveCurrentEnvironment,
+  resolveEnvironmentGrepInvert
+} from './test/utils/environment-tags.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const fiveMinutes = 5 * 60 * 1000
@@ -44,9 +47,13 @@ export function createPlaywrightConfig({
     '--ignore-certificate-errors'
   ]
 
-  const environmentGrepInvert = resolveEnvironmentGrepInvert(
-    process.env.ENVIRONMENT
-  )
+  const currentEnvironment = resolveCurrentEnvironment()
+  const environmentGrepInvert = resolveEnvironmentGrepInvert(currentEnvironment)
+  console.log('[environment-tags]', {
+    ENVIRONMENT: process.env.ENVIRONMENT || '(unset)',
+    resolved: currentEnvironment || '(unset)',
+    grepInvert: environmentGrepInvert ? String(environmentGrepInvert) : '(none)'
+  })
 
   return defineConfig({
     testDir: path.join(__dirname, 'test/specs'),

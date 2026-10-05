@@ -5,6 +5,7 @@ import { test as base } from '@playwright/test'
 import { initBridge, clearBridge } from '../utils/playwright-bridge.js'
 import { loadTestConfig } from '../utils/test-config.js'
 import { acquireSerialLock, releaseSerialLock } from '../utils/serial-lock.js'
+import { resolveEnvironmentTagDecision } from '../utils/environment-tags.js'
 
 export { expect } from '../utils/playwright-bridge.js'
 
@@ -21,8 +22,19 @@ export const test = base.extend({
   //   const crn = '1106298365'
   //   test.use({ crn })
   crn: [undefined, { option: true }],
+  // Safety net for env tags (primary filter is grepInvert in config).
+  // Declared as a bridge dependency so skip happens before the browser launches.
+  environmentTagFilter: [
+    async ({}, use, testInfo) => {
+      const decision = resolveEnvironmentTagDecision(testInfo.tags)
+      testInfo.skip(!decision.run, decision.reason)
+      await use()
+    },
+    { auto: true }
+  ],
   bridge: [
-    async ({ page, context }, use) => {
+    // environmentTagFilter is intentionally depended on so env skips run first.
+    async ({ page, context, environmentTagFilter: _envTagFilter }, use) => {
       const profile = process.env.PLAYWRIGHT_PROFILE || 'local'
       initBridge({ page, context, config: loadTestConfig(profile) })
       await page.bringToFront()

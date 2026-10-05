@@ -124,8 +124,6 @@ Tag a test (or `test.describe`) so it only runs on a specific `ENVIRONMENT`. Unt
 | `@test`     | `ENVIRONMENT=test` only     |
 | `@ext-test` | `ENVIRONMENT=ext-test` only |
 
-Filtering uses Playwright `grepInvert` based on `ENVIRONMENT` from `.env` / CI.
-
 ## Test specs
 
 Specs live under `test/specs/`, grouped by journey type:
