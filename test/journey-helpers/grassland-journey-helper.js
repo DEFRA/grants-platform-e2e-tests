@@ -70,6 +70,35 @@ export async function selectLandActionsAndReturnToTasks(actions) {
 }
 
 /**
+ * Select actions and quantities, then confirm HEFER consent required is shown.
+ */
+export async function selectLandAndValidateHEFERConsentRequired(actions) {
+  await GrasslandPage.selectActionsWithQuantities(actions)
+
+  await step('Confirm land and actions page is shown', async () => {
+    expect(await browser.getUrl()).toContain(
+      '/grasslands/confirm-land-and-actions'
+    )
+    await GrasslandPage.clickSaveAndContinue()
+    await browser.takeScreenshot()
+  })
+
+  await step('Confirm HEFER required page is shown', async () => {
+    expect(await browser.getUrl()).toContain(
+      '/grasslands/you-must-have-consent'
+    )
+    await browser.takeScreenshot()
+    await GrasslandPage.clickButton('Continue')
+  })
+
+  await step('Confirm task required page is shown', async () => {
+    await GrasslandPage.waitForTasksPage()
+    expect(await browser.getUrl()).toContain('/grasslands/tasks')
+    await browser.takeScreenshot()
+  })
+}
+
+/**
  * Submit the grasslands application and get the application number.
  */
 export async function checkAnswersAndSubmitApplication() {
