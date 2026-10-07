@@ -24,11 +24,11 @@ test.describe('Multi actions journey', () => {
 
     const selectLandParcel = 'SD6743-6292'
     const totalParcelArea = '7.5713'
-    const actionOne = 'CSAM3'
+    const actionOne = 'CSAM3_26'
     const actionOneArea = '3'
-    const actionTwo = 'SCR2'
+    const actionTwo = 'SCR2_26'
     const actionTwoArea = '2'
-    const actionThree = 'CLIG3'
+    const actionThree = 'CLIG3_26'
 
     const sbi = '106284736'
     await Backend.clearTestData(sbi, 'grasslands')
