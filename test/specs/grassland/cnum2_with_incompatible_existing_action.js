@@ -22,7 +22,7 @@ test.describe('CNUM2 action', () => {
 
       const selectLandParcel = 'SK0971-5761'
       const totalParcelArea = '0.6116'
-      const actionOne = 'CNUM2'
+      const actionOne = 'CNUM2_26'
 
       const sbi = '106514040'
       await Backend.clearTestData(sbi, 'grasslands')

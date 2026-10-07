@@ -24,7 +24,7 @@ test.describe('CLIG3 action journey', () => {
 
     const selectLandParcel = 'SD6743-6292'
     const totalParcelArea = '7.5713'
-    const actionOne = 'CLIG3'
+    const actionOne = 'CLIG3_26'
 
     const sbi = '106284736'
     await Backend.clearTestData(sbi, 'grasslands')

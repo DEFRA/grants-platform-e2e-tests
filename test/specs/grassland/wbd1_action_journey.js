@@ -24,7 +24,7 @@ test.describe('WBD1 action journey', () => {
 
     const selectLandParcel = 'NU0001-6274'
     const totalParcelArea = '12.4986'
-    const actionOne = 'WBD1'
+    const actionOne = 'WBD1_26'
     const actionOneArea = '2'
 
     const sbi = '106480734'

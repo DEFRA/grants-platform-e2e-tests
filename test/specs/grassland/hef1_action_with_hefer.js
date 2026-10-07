@@ -24,7 +24,7 @@ test.describe('HEF1 action with HEFER consent required', () => {
 
     const selectLandParcel = 'NT8108-1434'
     const totalParcelArea = '482.9248'
-    const actionOne = 'HEF1'
+    const actionOne = 'HEF1_26'
     const actionOneArea = '25'
 
     const sbi = '106480734'

@@ -24,7 +24,7 @@ test.describe('CSAM3 action journey', () => {
 
     const selectLandParcel = 'NT9802-9709'
     const totalParcelArea = '14.3442'
-    const actionOne = 'CSAM3'
+    const actionOne = 'CSAM3_26'
     const actionOneArea = '2.5341'
 
     const sbi = '106480734'

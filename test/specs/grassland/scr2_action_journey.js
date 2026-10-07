@@ -24,7 +24,7 @@ test.describe('SCR2 action journey', () => {
 
     const selectLandParcel = 'SD6743-6292'
     const totalParcelArea = '7.5713'
-    const actionOne = 'SCR2'
+    const actionOne = 'SCR2_26'
     const actionOneArea = '6'
 
     const sbi = '106284736'
