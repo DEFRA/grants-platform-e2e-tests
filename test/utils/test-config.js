@@ -1,6 +1,25 @@
 const DEFAULT_WAIT_TIMEOUT = 10000
 
 /**
+ * Grants UI base URL. ext-test uses the public CDP host; other environments
+ * stay on the internal CDP host.
+ */
+export function resolveGrantsUiBaseUrl(
+  environment = process.env.ENVIRONMENT,
+  fallback = 'http://localhost:3000'
+) {
+  if (!environment) {
+    return fallback
+  }
+
+  if (environment === 'ext-test') {
+    return 'https://grants-ui.ext-test.cdp.defra.gov.uk'
+  }
+
+  return `https://grants-ui.${environment}.cdp-int.defra.cloud`
+}
+
+/**
  * Resolves journey test URLs and timeouts for the active Playwright profile.
  * Mirrors the custom properties previously set on WDIO config / browser.options.
  */
@@ -8,9 +27,7 @@ export function loadTestConfig(
   profile = process.env.PLAYWRIGHT_PROFILE || 'cdp'
 ) {
   const environment = process.env.ENVIRONMENT
-  const grantsUiBase = environment
-    ? `https://grants-ui.${environment}.cdp-int.defra.cloud`
-    : 'http://localhost:3000'
+  const grantsUiBase = resolveGrantsUiBaseUrl(environment)
 
   const shared = {
     waitforTimeout: DEFAULT_WAIT_TIMEOUT,
