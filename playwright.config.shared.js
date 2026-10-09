@@ -6,6 +6,7 @@ import {
   resolveCurrentEnvironment,
   resolveEnvironmentGrepInvert
 } from './test/utils/environment-tags.js'
+import { resolveGrantsUiBaseUrl } from './test/utils/test-config.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const fiveMinutes = 5 * 60 * 1000
@@ -97,7 +98,5 @@ export function createPlaywrightConfig({
 }
 
 export function getEnvironmentBaseUrl(fallback = 'http://localhost:3000') {
-  return process.env.ENVIRONMENT
-    ? `https://grants-ui.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`
-    : fallback
+  return resolveGrantsUiBaseUrl(process.env.ENVIRONMENT, fallback)
 }
