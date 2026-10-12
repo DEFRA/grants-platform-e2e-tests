@@ -41,6 +41,43 @@ export async function loginAndRunWoodlandManagementJourney({
 }
 
 /**
+ * Submit the farmer's woodland claim after the claimable item has been created.
+ */
+export async function submitClaimForWoodlandApplication(appRefNum) {
+  await step(`Open woodland claim for ${appRefNum}`, async () => {
+    await WoodlandHomePage.openClaim()
+    await WoodlandHomePage.waitForUrlIncludes('/woodland/claim')
+    const heading = await $('h1')
+    await heading.waitForDisplayed({ timeout: 50000 })
+    expect(await heading.getText()).toBe('Review your WMP claim')
+    await browser.takeScreenshot()
+  })
+
+  await step('Continue from review your WMP claim', async () => {
+    await WoodlandHomePage.clickButton('Continue')
+    await WoodlandHomePage.waitForUrlIncludes('/woodland/claim-declaration')
+  })
+
+  await step('Confirm and submit the claim declaration', async () => {
+    await WoodlandHomePage.clickButton('Confirm and submit')
+    await browser.waitUntil(
+      async () =>
+        (await browser.getUrl()).includes('/woodland/claim-confirmation'),
+      {
+        timeout: 30000,
+        timeoutMsg: 'Woodland claim confirmation page did not load'
+      }
+    )
+
+    const panelTitle = await $('.govuk-panel__title')
+    await panelTitle.waitForDisplayed({ timeout: 50000 })
+    expect(await panelTitle.getText()).toBe('Claim submitted')
+    expect(await WoodlandHomePage.getApplicationReference()).toBeTruthy()
+    await browser.takeScreenshot()
+  })
+}
+
+/**
  * Log in as the farmer, update a returned woodland application, and resubmit.
  */
 export async function loginAndUpdateWoodlandApplication({

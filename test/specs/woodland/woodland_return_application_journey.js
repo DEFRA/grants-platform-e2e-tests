@@ -1,15 +1,17 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
-  completeWoodlandFCJourney,
-  completeWoodlandJourney,
+  updateCRMAndCompleteForestryCommissionJourney,
+  createDraftWoodlandAgreement,
   returnWoodlandApplication
 } from '../../journey-helpers/cw-journey-helper.js'
 import {
   loginAndRunWoodlandManagementJourney,
-  loginAndUpdateWoodlandApplication
+  loginAndUpdateWoodlandApplication,
+  submitClaimForWoodlandApplication
 } from '../../journey-helpers/woodland-journey-helper.js'
 import Backend from '../../utils/backend.js'
 import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreement-journey-helper.js'
+import { approveClaimAsGrantsPlatformAdministrator } from '~/test/journey-helpers/grants-platform-admin-helper.js'
 
 const crn = '1106298365'
 test.use({ crn })
@@ -31,6 +33,9 @@ test.describe('Return Application', () => {
     }
 
     const sbi = '106480734'
+    const code = 'woodland'
+    let agreementId
+
     await Backend.clearTestData(sbi, 'woodland')
     console.log('woodland application state cleared')
 
@@ -65,14 +70,27 @@ test.describe('Return Application', () => {
         })
       })
 
-    await test.step('CW approves the application along with the Forestry Commission journey', async () => {
-      console.log('New appRefNum: ' + newAppRefNum)
-      const { agreementId } = await completeWoodlandJourney(newAppRefNum)
-      const code = 'woodland'
-
+    await test.step('Case worker creates a draft agreement', async () => {
+      console.log('App Ref Num: ' + newAppRefNum)
+      const createdAgreement = await createDraftWoodlandAgreement(newAppRefNum)
+      agreementId = createdAgreement.agreementId
       console.log('Agreement ID: ' + agreementId)
+    })
+
+    await test.step('Farmer reviews and accepts the offer agreement sent to them by Case working team', async () => {
       await completeWoodlandAgreementJourney(agreementId, code, crn, password)
-      await completeWoodlandFCJourney(newAppRefNum)
+    })
+
+    await test.step('Case worker updates CRM and Forestry Commission completes the review process', async () => {
+      await updateCRMAndCompleteForestryCommissionJourney(newAppRefNum)
+    })
+
+    await test.step('Grants Platform Administrator approves the claim', async () => {
+      await approveClaimAsGrantsPlatformAdministrator(newAppRefNum)
+    })
+
+    await test.step('As a farmer you make a claim for Woodlands application', async () => {
+      await submitClaimForWoodlandApplication(newAppRefNum)
     })
   })
 })

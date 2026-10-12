@@ -43,10 +43,10 @@ export async function returnWoodlandApplication(appRefNum) {
   })
 }
 
-export async function completeWoodlandJourney(appRefNum) {
+export async function createDraftWoodlandAgreement(appRefNum) {
   await loginToCwAndOpenCase(appRefNum)
 
-  await step('Approve woodland application', async () => {
+  await step('Approve draft woodland application', async () => {
     await CwTasksPage.clickButtonByText('Start')
     await CwTasksPage.selectRadioByValue('ACTION_APPROVE_APPLICATION')
     await CwTasksPage.clickButtonByText('Confirm')
@@ -82,9 +82,9 @@ export async function completeWoodlandJourney(appRefNum) {
   })
 }
 
-export async function completeWoodlandFCJourney(appRefNum) {
+export async function updateCRMAndCompleteForestryCommissionJourney(appRefNum) {
   await step(
-    `Open case ${appRefNum} for Forestry Commission tasks`,
+    `Open case ${appRefNum} for CRM and Forestry Commission tasks`,
     async () => {
       await browser.url(browser.options.cwUrl)
       await cwPage.clickLinkByText(appRefNum)
@@ -132,30 +132,84 @@ export async function completeWoodlandFCJourney(appRefNum) {
     await browser.pause(2000)
   })
 
-  await step('Approve Forestry Commission review', async () => {
+  await step('Record Forestry Commission outcome', async () => {
+    await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
+    await browser.pause(2000)
+  })
+
+  await step('Record Forestry Commission review', async () => {
+    const eligibleAreaLink = await $('a[href*="TASK_RECORD_ELIGIBLE_AREA"]')
+    await eligibleAreaLink.waitForClickable({ timeout: 10000 })
+    await eligibleAreaLink.scrollIntoView()
+    await eligibleAreaLink.click()
+    await browser.pause(2000)
+
+    await CwTasksPage.selectRadioByValue('STATUS_RECORDED')
     await CwTasksPage.enterText(
-      '#ACTION_APPROVE_FC_REVIEW-comment',
-      "Forestry Commission's decision approved"
+      '#STATUS_RECORDED-comment',
+      'Checked the total eligible area for audit'
     )
-    await CwTasksPage.clickButtonByText('Approve Forestry Commission review')
-    // await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
+    await CwTasksPage.clickButtonByText('Confirm')
+    await browser.pause(2000)
+
+    const notifyClaimLink = await $('a[href*="TASK_NOTIFY_READY_TO_CLAIM"]')
+    await notifyClaimLink.waitForClickable({ timeout: 10000 })
+    await notifyClaimLink.scrollIntoView()
+    await notifyClaimLink.click()
+    await browser.pause(2000)
+
+    const notificationSent = await $('label=Notification sent')
+    await notificationSent.waitForClickable({ timeout: 10000 })
+    await notificationSent.click()
+    await CwTasksPage.enterText(
+      '.govuk-radios__conditional:not(.govuk-radios__conditional--hidden) textarea',
+      '65654'
+    )
+    await CwTasksPage.clickButtonByText('Confirm')
+    await browser.pause(2000)
+
+    await CwTasksPage.clickButtonByText('Complete Forestry Commission review')
     await browser.pause(2000)
   })
 
-  await step('Assert application status is Accepted', async () => {
-    await browser.pause(2000)
-    expect(await CWAgreementsPage.headerH2()).toBe('Application completed')
+  await step('Validate case status is updated to Awaiting Claim', async () => {
+    await browser.waitUntil(
+      async () =>
+        (await cwPage.getApplicationStatusText()) === 'Awaiting Claim',
+      {
+        timeout: 30000,
+        timeoutMsg: 'Application status did not update to "Awaiting Claim"'
+      }
+    )
+    expect(await cwPage.getApplicationStatusText()).toBe('Awaiting Claim')
+    expect(await cwPage.headerH2()).toBe('Waiting for the customer to claim')
     await browser.takeScreenshot()
   })
 
-  await step('Assert agreement status is Accepted', async () => {
-    await CwTasksPage.clickLinkByText('Agreements')
-    await browser.pause(2000)
-    expect(await CWAgreementsPage.getFirstAgreementStatusText()).toBe(
-      'Accepted'
-    )
-    await browser.takeScreenshot()
-  })
+  // await step('Approve Forestry Commission review', async () => {
+  //   await CwTasksPage.enterText(
+  //     '#ACTION_APPROVE_FC_REVIEW-comment',
+  //     "Forestry Commission's decision approved"
+  //   )
+  //   await CwTasksPage.clickButtonByText('Approve Forestry Commission review')
+  //   await CwTasksPage.clickButtonByText('Record Forestry Commission outcome')
+  //   await browser.pause(2000)
+  // })
+  //
+  // await step('Assert application status is Accepted', async () => {
+  //   await browser.pause(2000)
+  //   expect(await CWAgreementsPage.headerH2()).toBe('Application completed')
+  //   await browser.takeScreenshot()
+  // })
+  //
+  // await step('Assert agreement status is Accepted', async () => {
+  //   await CwTasksPage.clickLinkByText('Agreements')
+  //   await browser.pause(2000)
+  //   expect(await CWAgreementsPage.getFirstAgreementStatusText()).toBe(
+  //     'Accepted'
+  //   )
+  //   await browser.takeScreenshot()
+  // })
 }
 
 export async function loginToCwAndOpenCase(appRefNum) {

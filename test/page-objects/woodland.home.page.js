@@ -11,6 +11,10 @@ class WoodlandHomePage extends Page {
     return super.open('/woodland/returned-to-customer')
   }
 
+  openClaim() {
+    return super.open('/woodland/claim')
+  }
+
   clearApplicationState() {
     return super.open('/woodland/clear-application-state')
   }
