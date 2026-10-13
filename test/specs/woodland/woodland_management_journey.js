@@ -9,6 +9,10 @@ import {
 } from '../../journey-helpers/woodland-journey-helper.js'
 import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreement-journey-helper.js'
 import { approveClaimAsGrantsPlatformAdministrator } from '../../journey-helpers/grants-platform-admin-helper.js'
+import {
+  clearExistingPayments,
+  runGpsPaymentChecks
+} from '../../utils/gps_payment_helper.js'
 import Backend from '../../utils/backend.js'
 
 const crn = '1106298365'
@@ -36,6 +40,8 @@ test.describe('Woodland Management Plan Claim Journey', () => {
 
     await Backend.clearTestData(sbi, 'woodland')
     console.log('woodland application state cleared')
+    await clearExistingPayments(sbi)
+    console.log('Existing payments cleared')
 
     const { appRefNum } =
       await test.step('Farmer submits the woodland Application', async () => {
@@ -67,6 +73,10 @@ test.describe('Woodland Management Plan Claim Journey', () => {
 
     await test.step('As a farmer you make a claim for Woodlands application', async () => {
       await submitClaimForWoodlandApplication(appRefNum)
+    })
+
+    await test.step('Grants Payment Service is able to send payment details to Payment Hub', async () => {
+      await runGpsPaymentChecks(sbi)
     })
   })
 })
