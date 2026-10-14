@@ -158,6 +158,55 @@ export async function completeWoodlandFCJourney(appRefNum) {
   })
 }
 
+export async function completeWithdrawJourney(appRefNum) {
+  await step(`Complete application withdraw ${appRefNum}`, async () => {
+    await browser.url(browser.options.cwUrl)
+    await cwPage.clickLinkByText(appRefNum)
+    await browser.pause(3000)
+    await CwTasksPage.enterText(
+      '#WITHDRAW_APPLICATION-comment',
+      'Withdraw APPLICATION'
+    )
+    await CwTasksPage.clickButtonByText('Withdraw')
+    await browser.pause(2000)
+    await CwTasksPage.clickLinkByText('Refresh page')
+  })
+
+  await step('Refresh until application status is Withdrawn', async () => {
+    await browser.waitUntil(
+      async () => {
+        await CwTasksPage.clickLinkByText('Refresh page')
+        try {
+          return (await CWAgreementsPage.headerH3()) === 'Application withdrawn'
+        } catch {
+          return false
+        }
+      },
+      {
+        timeout: 60000,
+        interval: 2000,
+        timeoutMsg:
+          'Status did not change to "Application withdrawn" within 60s'
+      }
+    )
+  })
+
+  await step('Assert application status is Withdrawn', async () => {
+    await browser.pause(2000)
+    expect(await CWAgreementsPage.headerH3()).toBe('Application withdrawn')
+    await browser.takeScreenshot()
+  })
+
+  await step('Assert agreement status is Withdrawn', async () => {
+    await CwTasksPage.clickLinkByText('Agreements')
+    await browser.pause(2000)
+    expect(await CWAgreementsPage.getFirstAgreementStatusText()).toBe(
+      'Withdrawn'
+    )
+    await browser.takeScreenshot()
+  })
+}
+
 export async function loginToCwAndOpenCase(appRefNum) {
   return step(
     `Login to caseworker portal and open case ${appRefNum}`,
