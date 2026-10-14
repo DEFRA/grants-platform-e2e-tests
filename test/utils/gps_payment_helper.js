@@ -54,8 +54,16 @@ export const clearExistingPayments = async (sbi) => {
   expect(getResponse.body.docs).toHaveLength(0)
 }
 
-export const runGpsPaymentChecks = async (sbi) => {
-  //  Step 1: Wait for the grant payment record to be available and valid
+const toMoneyString = (value) => {
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid payment amount: ${value}`)
+  }
+  return parsed.toFixed(2)
+}
+
+export const runGpsPaymentChecksForWMP = async (sbi, paymentAmount) => {
+  // Step 1: Wait for the grant payment record to be available and valid
   console.log(`[GPS] Step 1`)
   console.log(`[GPS] START for SBI ${sbi}`)
   const { body: initialBody, statusCode: initialStatusCode } =
@@ -99,21 +107,7 @@ export const runGpsPaymentChecks = async (sbi) => {
     const processedItem = processResult.result.find(
       (item) => item.body.correlationId === payment.correlationId
     )
-    console.log('[GPS] processed payload summary', {
-      sbi: processedItem.body.sbi,
-      correlationId: processedItem.body.correlationId,
-      invoiceNumber: processedItem.body.invoiceNumber,
-      dueDate: processedItem.body.dueDate,
-      paymentLines: processedItem.body.invoiceLines?.length,
-      sourceSystem: processedItem.body.sourceSystem,
-      status: processedItem.body.status
-    })
-
     expect(processedItem).toBeDefined()
-    expect(processedItem.body.sbi).toBe(sbi)
-    expect(processedItem.body.correlationId).toBe(payment.correlationId)
-    expect(processedItem.body.invoiceLines).toBeDefined()
-    expect(processedItem.body.invoiceLines.length).toBeGreaterThan(0)
     expect(processedItem.body.sourceSystem).toBe('WMP')
     expect(processedItem.body.ledger).toBe('AP')
     expect(processedItem.body.deliveryBody).toBe('RP10')
@@ -123,33 +117,36 @@ export const runGpsPaymentChecks = async (sbi) => {
     expect(processedItem.body.fesCode).toBe('FALS_WMP')
     expect(processedItem.body.marketingYear).toBe('2026')
     expect(processedItem.body.paymentRequestNumber).toBeTruthy()
+    expect(processedItem.body.agreementNumber).toBeTruthy()
+    expect(processedItem.body.contractNumber).toBeTruthy()
     expect(processedItem.body.currency).toBe('GBP')
     expect(processedItem.body.remittanceDescription).toBe(
       'Woodland Management Plan Payment'
     )
-    expect(processedItem.body.value).toBeTruthy()
-    expect(processedItem.body.contractNumber).toBeTruthy()
-    expect(processedItem.body.correlationId).toBe(payment.correlationId)
+    expect(processedItem.body.invoiceLines).toBeDefined()
+    expect(processedItem.body.invoiceLines.length).toBeGreaterThan(0)
     processedItem.body.invoiceLines.forEach((line, index) => {
-      console.log('[GPS] invoice line', {
-        index: index + 1,
-        schemeCode: line.schemeCode,
-        accountCode: line.accountCode,
-        fundCode: line.fundCode,
-        description: line.description,
-        value: line.value
-      })
-
-      expect(line.schemeCode).toBeDefined()
-      expect(line.schemeCode).not.toBe('')
-      expect(line.schemeCode).not.toBeNull()
+      expect(line.schemeCode).toBe('51840')
       expect(line.accountCode).toBe('SOS710')
       expect(line.fundCode).toBe('DRD10')
+      expect(line.agreementNumber).toBeTruthy()
+      expect(line.description).toBe('G00 - Gross Value of Claim')
+      expect(line.value).toBeTruthy()
       expect(line.deliveryBody).toBe('RP10')
       expect(line.marketingYear).toBe('2026')
-      expect(line.description).toBeTruthy()
-      expect(line.value).toBeTruthy()
     })
+    expect(processedItem.body.correlationId).toBe(payment.correlationId)
+    if (paymentAmount !== undefined) {
+      const expectedPositiveAmount = toMoneyString(paymentAmount)
+      const expectedNegativeAmount = `-${expectedPositiveAmount}`
+
+      expect(processedItem.body.value).toBe(expectedNegativeAmount)
+      expect(processedItem.body.invoiceLines[0].value).toBe(
+        expectedPositiveAmount
+      )
+    } else {
+      expect(processedItem.body.value).toBeTruthy()
+    }
   })
   // Step 3: check status is submitted
   console.log(`[GPS] Step 3`)
@@ -179,8 +176,7 @@ export const runGpsPaymentChecks = async (sbi) => {
       correlationId: payment.correlationId,
       status: payment.status
     })
-    // expect(payment.status).toBe('submitted')
+    expect(payment.status).toBe('submitted')
   })
-
   console.log(`[GPS] COMPLETED SUCCESSFULLY for SBI ${sbi}`)
 }

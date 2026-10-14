@@ -11,7 +11,7 @@ import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreemen
 import { approveClaimAsGrantsPlatformAdministrator } from '../../journey-helpers/grants-platform-admin-helper.js'
 import {
   clearExistingPayments,
-  runGpsPaymentChecks
+  runGpsPaymentChecksForWMP
 } from '../../utils/gps_payment_helper.js'
 import Backend from '../../utils/backend.js'
 
@@ -76,7 +76,7 @@ test.describe('Woodland Management Plan Claim Journey', () => {
     })
 
     await test.step('Grants Payment Service is able to send payment details to Payment Hub', async () => {
-      await runGpsPaymentChecks(sbi)
+      await runGpsPaymentChecksForWMP(sbi, 1500)
     })
   })
 })
