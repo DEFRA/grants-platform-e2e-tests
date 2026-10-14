@@ -4,7 +4,6 @@ import {
   completeWithdrawJourney
 } from '../../journey-helpers/cw-journey-helper.js'
 import { loginAndRunWoodlandManagementJourney } from '../../journey-helpers/woodland-journey-helper.js'
-import { checkAgreementIsWithdraw } from '../../journey-helpers/agreement-journey-helper.js'
 import Backend from '../../utils/backend.js'
 
 const crn = '1106298365'
@@ -42,11 +41,9 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
     await test.step('CW approves the application along with Agreement and the Forestry Commission journey', async () => {
       console.log('App Ref Num: ' + appRefNum)
       const { agreementId } = await completeWoodlandJourney(appRefNum)
-      const code = 'woodland'
+      console.log('Agreement Id: ' + agreementId)
 
       await completeWithdrawJourney(appRefNum)
-
-      await checkAgreementIsWithdraw(agreementId, code, crn, password)
     })
   })
 })

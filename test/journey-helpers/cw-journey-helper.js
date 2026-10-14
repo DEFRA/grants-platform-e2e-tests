@@ -1,4 +1,4 @@
-import { browser, expect, $ } from '../utils/test-runtime.js'
+import { browser, expect, $, getPage } from '../utils/test-runtime.js'
 import {
   entraLogin,
   isCaseworkerPortalUrl,
@@ -175,10 +175,16 @@ export async function completeWithdrawJourney(appRefNum) {
   await step('Refresh until application status is Withdrawn', async () => {
     await browser.waitUntil(
       async () => {
-        await CwTasksPage.clickLinkByText('Refresh page')
         try {
-          return (await CWAgreementsPage.headerH3()) === 'Application withdrawn'
-        } catch {
+          await browser.refresh()
+          await browser.pause(1000)
+
+          const heading = await CWAgreementsPage.headerH3()
+          console.log('Current heading:', heading)
+
+          return heading === 'Application withdrawn'
+        } catch (error) {
+          console.log('Unable to verify application status:', error.message)
           return false
         }
       },
@@ -204,6 +210,25 @@ export async function completeWithdrawJourney(appRefNum) {
       'Withdrawn'
     )
     await browser.takeScreenshot()
+
+    const page = getPage()
+
+    const [newTab] = await Promise.all([
+      page.context().waitForEvent('page'),
+      CwTasksPage.clickLinkByText('View agreement')
+    ])
+
+    await newTab.waitForLoadState('domcontentloaded')
+
+    await browser.switchToWindow(newTab)
+
+    console.log('New tab URL:', newTab.url())
+
+    await browser.pause(2000)
+
+    expect(await CWAgreementsPage.headerH2text()).toBe(
+      'This agreement offer has been withdrawn'
+    )
   })
 }
 
