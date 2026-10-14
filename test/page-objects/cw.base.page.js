@@ -54,9 +54,27 @@ export default class CwBasePage {
     return await input.getValue()
   }
 
+  async getAgreementNumber() {
+    const value = await $(
+      '//dt[contains(@class, "govuk-summary-list__key")][normalize-space()="Agreement number"]/following-sibling::dd'
+    )
+    await value.waitForDisplayed({ timeout: 10000 })
+    return (await value.getText()).trim()
+  }
+
   async headerH2() {
     const h2Element = await $('[data-testid="stage-heading"]')
     return h2Element.getText()
+  }
+
+  async headerH2text() {
+    const h2Element = await $(`.govuk-notification-banner__heading`)
+    return h2Element.getText()
+  }
+
+  async headerH3() {
+    const h3Element = await $(`h3`)
+    return h3Element.getText()
   }
 
   async selectRadioButtonByCaseText(caseText) {

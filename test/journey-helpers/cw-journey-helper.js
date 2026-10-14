@@ -1,4 +1,4 @@
-import { browser, expect, $ } from '../utils/test-runtime.js'
+import { browser, expect, $, getPage } from '../utils/test-runtime.js'
 import {
   entraLogin,
   isCaseworkerPortalUrl,
@@ -155,6 +155,80 @@ export async function completeWoodlandFCJourney(appRefNum) {
       'Accepted'
     )
     await browser.takeScreenshot()
+  })
+}
+
+export async function completeWithdrawJourney(appRefNum) {
+  await step(`Complete application withdraw ${appRefNum}`, async () => {
+    await browser.url(browser.options.cwUrl)
+    await cwPage.clickLinkByText(appRefNum)
+    await browser.pause(3000)
+    await CwTasksPage.enterText(
+      '#WITHDRAW_APPLICATION-comment',
+      'Withdraw APPLICATION'
+    )
+    await CwTasksPage.clickButtonByText('Withdraw')
+    await browser.pause(2000)
+    await CwTasksPage.clickLinkByText('Refresh page')
+  })
+
+  await step('Refresh until application status is Withdrawn', async () => {
+    await browser.waitUntil(
+      async () => {
+        try {
+          await browser.refresh()
+          await browser.pause(1000)
+
+          const heading = await CWAgreementsPage.headerH3()
+          console.log('Current heading:', heading)
+
+          return heading === 'Application withdrawn'
+        } catch (error) {
+          console.log('Unable to verify application status:', error.message)
+          return false
+        }
+      },
+      {
+        timeout: 60000,
+        interval: 2000,
+        timeoutMsg:
+          'Status did not change to "Application withdrawn" within 60s'
+      }
+    )
+  })
+
+  await step('Assert application status is Withdrawn', async () => {
+    await browser.pause(2000)
+    expect(await CWAgreementsPage.headerH3()).toBe('Application withdrawn')
+    await browser.takeScreenshot()
+  })
+
+  await step('Assert agreement status is Withdrawn', async () => {
+    await CwTasksPage.clickLinkByText('Agreements')
+    await browser.pause(2000)
+    expect(await CWAgreementsPage.getFirstAgreementStatusText()).toBe(
+      'Withdrawn'
+    )
+    await browser.takeScreenshot()
+
+    const page = getPage()
+
+    const [newTab] = await Promise.all([
+      page.context().waitForEvent('page'),
+      CwTasksPage.clickLinkByText('View agreement')
+    ])
+
+    await newTab.waitForLoadState('domcontentloaded')
+
+    await browser.switchToWindow(newTab)
+
+    console.log('New tab URL:', newTab.url())
+
+    await browser.pause(2000)
+
+    expect(await CWAgreementsPage.headerH2text()).toBe(
+      'This agreement offer has been withdrawn'
+    )
   })
 }
 
