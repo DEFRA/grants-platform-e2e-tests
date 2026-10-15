@@ -20,13 +20,15 @@ test.afterEach(async ({ context }) => {
   await context.clearCookies()
 })
 
-test.describe('Return Application', () => {
+test.describe('Return Application; decrease area and hence the payment value', () => {
   test('The case worked is able to return the  application back', async () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
     const woodlandApplicationData = {
-      landParcelId: 'NT8701-9412',
-      hectaresTenOrOverYearsOld: 50,
+      landParcelIdOne: 'NT8701-9412',
+      landParcelIdTwo: ' NT8108-1434',
+      WoodlandAreaTenOrOverYearsOld: 500,
+      WoodlandAreaUnderTenYearsOld: 20,
       centreGridReference: 'SP 4178 2432',
       woodlandName: 'Ashbrook WD',
       fcTeamCodeId: 'fcTeamCode-2'
@@ -35,6 +37,8 @@ test.describe('Return Application', () => {
     const sbi = '106480734'
     const code = 'woodland'
     let agreementId
+    const initialExpectedPaymentAmount = 9300
+    const revisedExpectedPaymentAmount = 1530
 
     await Backend.clearTestData(sbi, 'woodland')
     console.log('woodland application state cleared')
@@ -44,7 +48,8 @@ test.describe('Return Application', () => {
         return loginAndRunWoodlandManagementJourney({
           username: crn,
           password,
-          applicationData: woodlandApplicationData
+          applicationData: woodlandApplicationData,
+          initialExpectedPaymentAmount
         })
       })
 
@@ -54,19 +59,27 @@ test.describe('Return Application', () => {
     })
 
     const updatedWoodlandApplicationData = {
-      landParcelId: 'NT8701-9412',
-      hectaresTenOrOverYearsOld: 35,
+      landParcelIdOne: 'NT8701-9412',
+      WoodlandAreaTenOrOverYearsOld: 50,
+      WoodlandAreaUnderTenYearsOld: 1,
       centreGridReference: 'SP 4178 2432',
       woodlandName: 'Ashbrook WD',
       fcTeamCodeId: 'fcTeamCode-2'
     }
 
+    const totalAreaForClaim =
+      Number(
+        updatedWoodlandApplicationData.WoodlandAreaTenOrOverYearsOld ?? 0
+      ) +
+      Number(updatedWoodlandApplicationData.WoodlandAreaUnderTenYearsOld ?? 0)
+
     const { newAppRefNum } =
-      await test.step('Farmer updates the application and resubmit', async () => {
+      await test.step('Farmer updates the application with reduced area and resubmit', async () => {
         return loginAndUpdateWoodlandApplication({
           username: crn,
           password,
-          applicationData: updatedWoodlandApplicationData
+          applicationData: updatedWoodlandApplicationData,
+          revisedExpectedPaymentAmount
         })
       })
 
@@ -86,7 +99,10 @@ test.describe('Return Application', () => {
     })
 
     await test.step('Grants Platform Administrator approves the claim', async () => {
-      await approveClaimAsGrantsPlatformAdministrator(newAppRefNum)
+      await approveClaimAsGrantsPlatformAdministrator(
+        newAppRefNum,
+        totalAreaForClaim
+      )
     })
 
     await test.step('As a farmer you make a claim for Woodlands application', async () => {

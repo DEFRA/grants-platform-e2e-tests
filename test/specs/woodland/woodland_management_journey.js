@@ -15,7 +15,7 @@ import {
 } from '../../utils/gps_payment_helper.js'
 import Backend from '../../utils/backend.js'
 
-const crn = '1106298365'
+const crn = '1102760349'
 test.use({ crn })
 
 test.afterEach(async ({ context }) => {
@@ -27,15 +27,21 @@ test.describe('Woodland Management Plan Claim Journey', () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
     const woodlandApplicationData = {
-      landParcelId: 'NT8701-9412',
-      hectaresTenOrOverYearsOld: 50,
+      landParcelIdOne: 'SD6351-8781',
+      landParcelIdTwo: 'SD6352-8774',
+      WoodlandAreaTenOrOverYearsOld: 12,
+      WoodlandAreaUnderTenYearsOld: 0,
       centreGridReference: 'SP 4178 2432',
       woodlandName: 'Ashbrook WD',
       fcTeamCodeId: 'fcTeamCode-2'
     }
 
-    const sbi = '106480734'
+    const sbi = '121428499'
     const code = 'woodland'
+    const expectedPaymentAmount = 1500
+    const totalAreaForClaim =
+      Number(woodlandApplicationData.WoodlandAreaTenOrOverYearsOld ?? 0) +
+      Number(woodlandApplicationData.WoodlandAreaUnderTenYearsOld ?? 0)
     let agreementId
 
     await Backend.clearTestData(sbi, 'woodland')
@@ -48,7 +54,8 @@ test.describe('Woodland Management Plan Claim Journey', () => {
         return loginAndRunWoodlandManagementJourney({
           username: crn,
           password,
-          applicationData: woodlandApplicationData
+          applicationData: woodlandApplicationData,
+          expectedPaymentAmount
         })
       })
 
@@ -68,7 +75,10 @@ test.describe('Woodland Management Plan Claim Journey', () => {
     })
 
     await test.step('Grants Platform Administrator approves the claim', async () => {
-      await approveClaimAsGrantsPlatformAdministrator(appRefNum)
+      await approveClaimAsGrantsPlatformAdministrator(
+        appRefNum,
+        totalAreaForClaim
+      )
     })
 
     await test.step('As a farmer you make a claim for Woodlands application', async () => {
@@ -76,7 +86,7 @@ test.describe('Woodland Management Plan Claim Journey', () => {
     })
 
     await test.step('Grants Payment Service is able to send payment details to Payment Hub', async () => {
-      await runGpsPaymentChecksForWMP(sbi, 1500)
+      await runGpsPaymentChecksForWMP(sbi, expectedPaymentAmount)
     })
   })
 })

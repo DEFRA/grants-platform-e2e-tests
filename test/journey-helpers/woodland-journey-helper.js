@@ -12,7 +12,8 @@ const RETURNED_APPLICATION_HEADING =
 export async function loginAndRunWoodlandManagementJourney({
   username,
   password,
-  applicationData
+  applicationData,
+  expectedPaymentAmount
 }) {
   await WoodlandHomePage.open()
   await step('Wait for login or check-details page', async () => {
@@ -26,7 +27,7 @@ export async function loginAndRunWoodlandManagementJourney({
   await WoodlandHomePage.completeCheckDetails()
   await WoodlandHomePage.completeEligibility()
   await WoodlandHomePage.completeWoodlandDetails(applicationData)
-  await WoodlandHomePage.submitApplication()
+  await WoodlandHomePage.submitApplication(expectedPaymentAmount)
 
   return step('Read application reference from confirmation page', async () => {
     await browser.waitUntil(
@@ -101,9 +102,7 @@ export async function loginAndUpdateWoodlandApplication({
   })
 
   await WoodlandHomePage.clickButton('Continue')
-  await WoodlandHomePage.updateWoodlandOverTenYearsOld(
-    applicationData.hectaresTenOrOverYearsOld
-  )
+  await WoodlandHomePage.updateWoodlandAreas(applicationData)
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.clickButton('Confirm and submit')

@@ -1,4 +1,4 @@
-import { browser, $ } from '../utils/test-runtime.js'
+import { browser, $, expect } from '../utils/test-runtime.js'
 import { Page } from '../page-objects/page'
 import { step } from '../utils/report-step.js'
 
@@ -64,26 +64,59 @@ class WoodlandHomePage extends Page {
 
   async completeWoodlandDetails({
     landParcelId,
+    landParcelIdOne,
+    landParcelIdTwo,
     hectaresTenOrOverYearsOld,
+    WoodlandAreaTenOrOverYearsOld,
+    hectaresUnderTenYearsOld,
+    WoodlandAreaUnderTenYearsOld,
     centreGridReference,
     woodlandName,
     fcTeamCodeId
   }) {
+    const landParcelIds = [landParcelId, landParcelIdOne, landParcelIdTwo]
+      .map((id) => (id == null ? '' : String(id).trim()))
+      .filter(Boolean)
+    const woodlandOverTenYears =
+      hectaresTenOrOverYearsOld ?? WoodlandAreaTenOrOverYearsOld
+    const woodlandUnderTenYears =
+      hectaresUnderTenYearsOld ?? WoodlandAreaUnderTenYearsOld
+    const hasWoodlandUnderTenYears =
+      woodlandUnderTenYears !== undefined &&
+      woodlandUnderTenYears !== null &&
+      woodlandUnderTenYears !== ''
+
     return step('Complete woodland details', async () => {
-      await step(`Select land parcel ${landParcelId}`, async () => {
-        await this.clickHref('/woodland/land-parcels')
-        await this.waitForUrlIncludes('/woodland/land-parcels')
-        await this.selectCheckboxByValue(landParcelId)
-        await this.clickButton('Save and continue')
-      })
+      await step(
+        `Select land parcels ${landParcelIds.join(', ')}`,
+        async () => {
+          await this.clickHref('/woodland/land-parcels')
+          await this.waitForUrlIncludes('/woodland/land-parcels')
+          for (const parcelId of landParcelIds) {
+            await this.selectLandParcel(parcelId)
+          }
+          await this.clickButton('Save and continue')
+        }
+      )
 
       await step(
-        `Enter woodland over 10 years old: ${hectaresTenOrOverYearsOld} ha`,
+        hasWoodlandUnderTenYears
+          ? `Enter woodland areas: ${woodlandOverTenYears} ha over 10 years, ${woodlandUnderTenYears} ha under 10 years`
+          : `Enter woodland over 10 years old: ${woodlandOverTenYears} ha`,
         async () => {
+          await this.waitForUrlIncludes('/woodland/total-area-of-woodland')
           await this.typeById(
             'hectaresTenOrOverYearsOld',
-            String(hectaresTenOrOverYearsOld)
+            String(woodlandOverTenYears)
           )
+
+          if (hasWoodlandUnderTenYears) {
+            await this.typeById(
+              'hectaresUnderTenYearsOld',
+              String(woodlandUnderTenYears)
+            )
+          }
+
           await this.clickButton('Save and continue')
         }
       )
@@ -105,27 +138,76 @@ class WoodlandHomePage extends Page {
     })
   }
 
-  async submitApplication() {
+  async submitApplication(expectedPaymentAmount) {
     return step('Check and submit application', async () => {
       await this.clickHref('/woodland/summary')
       await this.waitForUrlIncludes('/woodland/summary')
       await this.clickButton('Continue')
+      await this.verifyPotentialFunding(expectedPaymentAmount)
       await this.clickButton('Continue')
       await this.clickButton('Confirm and submit')
     })
   }
 
-  async updateWoodlandOverTenYearsOld(hectaresTenOrOverYearsOld) {
+  async verifyPotentialFunding(expectedPaymentAmount) {
+    const hasExpectedAmount =
+      expectedPaymentAmount !== undefined &&
+      expectedPaymentAmount !== null &&
+      expectedPaymentAmount !== ''
+
     return step(
-      `Change woodland over 10 years old to ${hectaresTenOrOverYearsOld} ha`,
+      hasExpectedAmount
+        ? `Potential funding shows a grant of ${formatGrantAmount(expectedPaymentAmount)}`
+        : 'Open potential funding',
+      async () => {
+        await this.waitForUrlIncludes('/woodland/potential-funding')
+
+        if (!hasExpectedAmount) {
+          return
+        }
+
+        const formattedAmount = formatGrantAmount(expectedPaymentAmount)
+        const fundingText = await $('main').getText()
+        expect(fundingText).toContain(
+          `Based on the information provided, you may be eligible for a grant of ${formattedAmount}.`
+        )
+        await browser.takeScreenshot()
+      }
+    )
+  }
+
+  async updateWoodlandAreas(applicationData) {
+    const woodlandOverTenYears =
+      applicationData.hectaresTenOrOverYearsOld ??
+      applicationData.WoodlandAreaTenOrOverYearsOld
+    const woodlandUnderTenYears =
+      applicationData.hectaresUnderTenYearsOld ??
+      applicationData.WoodlandAreaUnderTenYearsOld
+    const hasWoodlandUnderTenYears =
+      woodlandUnderTenYears !== undefined &&
+      woodlandUnderTenYears !== null &&
+      woodlandUnderTenYears !== ''
+
+    return step(
+      hasWoodlandUnderTenYears
+        ? `Change woodland areas to ${woodlandOverTenYears} ha over 10 years and ${woodlandUnderTenYears} ha under 10 years`
+        : `Change woodland over 10 years old to ${woodlandOverTenYears} ha`,
       async () => {
         await this.waitForUrlIncludes('/woodland/summary')
         await this.clickSummaryChangeFor('Woodland over 10 years old')
         await this.waitForUrlIncludes('/woodland/total-area-of-woodland')
         await this.typeById(
           'hectaresTenOrOverYearsOld',
-          String(hectaresTenOrOverYearsOld)
+          String(woodlandOverTenYears)
         )
+
+        if (hasWoodlandUnderTenYears) {
+          await this.typeById(
+            'hectaresUnderTenYearsOld',
+            String(woodlandUnderTenYears)
+          )
+        }
+
         await this.clickButton('Save and continue')
         await this.waitForUrlIncludes('/woodland/summary')
       }
@@ -181,6 +263,33 @@ class WoodlandHomePage extends Page {
     await browser.execute((el) => el.click(), radio)
   }
 
+  async selectLandParcel(parcelId) {
+    const parcelIdWithSpace = String(parcelId).trim().replace('-', ' ')
+    const byHyphen = await $(
+      `input[type="checkbox"][value="${String(parcelId).trim()}"]`
+    )
+
+    if (await byHyphen.isExisting()) {
+      await this.selectCheckboxByValue(String(parcelId).trim())
+      return
+    }
+
+    const bySpace = await $(
+      `input[type="checkbox"][value="${parcelIdWithSpace}"]`
+    )
+    if (await bySpace.isExisting()) {
+      await this.selectCheckboxByValue(parcelIdWithSpace)
+      return
+    }
+
+    const label = await $(`label*=${parcelIdWithSpace}`)
+    await label.waitForClickable({
+      timeout: 50000,
+      timeoutMsg: `Land parcel "${parcelIdWithSpace}" was not clickable`
+    })
+    await label.click()
+  }
+
   async selectCheckboxByValue(value) {
     const safeValue = String(value).replace(/"/g, '\\"')
     const checkbox = await $(`input[type="checkbox"][value="${safeValue}"]`)
@@ -232,6 +341,13 @@ class WoodlandHomePage extends Page {
     })
     await link.click()
   }
+}
+
+function formatGrantAmount(amount) {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP'
+  }).format(Number(amount))
 }
 
 export default new WoodlandHomePage()
