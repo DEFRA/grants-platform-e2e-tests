@@ -46,9 +46,9 @@ class CWTasksPage extends BasePage {
     const statusElement = await $(
       '//strong[normalize-space()="Status:"]/parent::p'
     )
-    const statusText = await statusElement.getText();
+    const statusText = await statusElement.getText()
 
-    return statusText.replace('Status:', '').trim();
+    return statusText.replace('Status:', '').trim()
   }
 }
 
