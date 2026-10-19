@@ -2,7 +2,8 @@ import { test } from '../../fixtures/base.fixture.js'
 import {
   updateCRMAndCompleteForestryCommissionJourney,
   createDraftWoodlandAgreement,
-  returnWoodlandApplication
+  returnWoodlandApplication,
+  checkApplicationStatusOnCW
 } from '../../journey-helpers/cw-journey-helper.js'
 import {
   loginAndRunWoodlandManagementJourney,
@@ -12,6 +13,8 @@ import {
 import Backend from '../../utils/backend.js'
 import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreement-journey-helper.js'
 import { approveClaimAsGrantsPlatformAdministrator } from '~/test/journey-helpers/grants-platform-admin-helper.js'
+import { claimsStep } from '~/test/utils/featureFlags.js'
+import { runGpsPaymentChecksForWMP } from '~/test/utils/gps_payment_helper.js'
 
 const crn = '1106298365'
 test.use({ crn })
@@ -36,6 +39,7 @@ test.describe('Return Application; decrease area and hence the payment value', (
 
     const sbi = '106480734'
     const code = 'woodland'
+    const expectedPaymentAmount = 1500
     let agreementId
     const initialExpectedPaymentAmount = 9300
     const revisedExpectedPaymentAmount = 1530
@@ -98,15 +102,40 @@ test.describe('Return Application; decrease area and hence the payment value', (
       await updateCRMAndCompleteForestryCommissionJourney(newAppRefNum)
     })
 
-    await test.step('Grants Platform Administrator approves the claim', async () => {
-      await approveClaimAsGrantsPlatformAdministrator(
-        newAppRefNum,
-        totalAreaForClaim
-      )
-    })
+    await claimsStep(
+      test,
+      'Grants Platform Administrator approves the claim',
+      async () => {
+        await approveClaimAsGrantsPlatformAdministrator(
+          appRefNum,
+          totalAreaForClaim
+        )
+      }
+    )
 
-    await test.step('As a farmer you make a claim for Woodlands application', async () => {
-      await submitClaimForWoodlandApplication(newAppRefNum)
-    })
+    await claimsStep(
+      test,
+      'As a farmer you make a claim for Woodlands application',
+      async () => {
+        await submitClaimForWoodlandApplication(appRefNum)
+      }
+    )
+
+    await claimsStep(
+      test,
+      'Grants Payment Service is able to send payment details to Payment Hub',
+      async () => {
+        await runGpsPaymentChecksForWMP(sbi, expectedPaymentAmount)
+      }
+    )
+
+    await claimsStep(
+      test,
+      'Application status on CW should be Claim complete',
+      async () => {
+        console.log('App Ref Num: ' + appRefNum)
+        await checkApplicationStatusOnCW(appRefNum, 'Claim Completed')
+      }
+    )
   })
 })

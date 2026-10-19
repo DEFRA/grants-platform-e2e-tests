@@ -41,6 +41,15 @@ class CWTasksPage extends BasePage {
   async approveAgreement(agreementsent) {
     await this.selectRadioByValue(agreementsent)
   }
+
+  async verifyApplicationStatusOnCW() {
+    const statusElement = await $(
+      '//strong[normalize-space()="Status:"]/parent::p'
+    )
+    const statusText = await statusElement.getText();
+
+    return statusText.replace('Status:', '').trim();
+  }
 }
 
 export default new CWTasksPage()

@@ -1,5 +1,6 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
+  checkApplicationStatusOnCW,
   createDraftWoodlandAgreement,
   updateCRMAndCompleteForestryCommissionJourney
 } from '../../journey-helpers/cw-journey-helper.js'
@@ -14,6 +15,7 @@ import {
   runGpsPaymentChecksForWMP
 } from '../../utils/gps_payment_helper.js'
 import Backend from '../../utils/backend.js'
+import { claimsStep } from '~/test/utils/featureFlags.js'
 
 const crn = '1102760349'
 test.use({ crn })
@@ -74,19 +76,40 @@ test.describe('Woodland Management Plan Claim Journey', () => {
       await updateCRMAndCompleteForestryCommissionJourney(appRefNum)
     })
 
-    await test.step('Grants Platform Administrator approves the claim', async () => {
-      await approveClaimAsGrantsPlatformAdministrator(
-        appRefNum,
-        totalAreaForClaim
-      )
-    })
+    await claimsStep(
+      test,
+      'Grants Platform Administrator approves the claim',
+      async () => {
+        await approveClaimAsGrantsPlatformAdministrator(
+          appRefNum,
+          totalAreaForClaim
+        )
+      }
+    )
 
-    await test.step('As a farmer you make a claim for Woodlands application', async () => {
-      await submitClaimForWoodlandApplication(appRefNum)
-    })
+    await claimsStep(
+      test,
+      'As a farmer you make a claim for Woodlands application',
+      async () => {
+        await submitClaimForWoodlandApplication(appRefNum)
+      }
+    )
 
-    await test.step('Grants Payment Service is able to send payment details to Payment Hub', async () => {
-      await runGpsPaymentChecksForWMP(sbi, expectedPaymentAmount)
-    })
+    await claimsStep(
+      test,
+      'Grants Payment Service is able to send payment details to Payment Hub',
+      async () => {
+        await runGpsPaymentChecksForWMP(sbi, expectedPaymentAmount)
+      }
+    )
+
+    await claimsStep(
+      test,
+      'Application status on CW should be Claim complete',
+      async () => {
+        console.log('App Ref Num: ' + appRefNum)
+        await checkApplicationStatusOnCW(appRefNum, 'Claim Completed')
+      }
+    )
   })
 })
