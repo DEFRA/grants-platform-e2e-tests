@@ -63,20 +63,16 @@ class WoodlandHomePage extends Page {
   }
 
   async completeWoodlandDetails({
-    landParcelId,
-    landParcelIdOne,
-    landParcelIdTwo,
     hectaresTenOrOverYearsOld,
     WoodlandAreaTenOrOverYearsOld,
     hectaresUnderTenYearsOld,
     WoodlandAreaUnderTenYearsOld,
     centreGridReference,
     woodlandName,
-    fcTeamCodeId
+    fcTeamCodeId,
+    ...applicationData
   }) {
-    const landParcelIds = [landParcelId, landParcelIdOne, landParcelIdTwo]
-      .map((id) => (id == null ? '' : String(id).trim()))
-      .filter(Boolean)
+    const landParcelIds = landParcelIdsFrom(applicationData)
     const woodlandOverTenYears =
       hectaresTenOrOverYearsOld ?? WoodlandAreaTenOrOverYearsOld
     const woodlandUnderTenYears =
@@ -341,6 +337,23 @@ class WoodlandHomePage extends Page {
     })
     await link.click()
   }
+}
+
+function landParcelIdsFrom(applicationData) {
+  return Object.entries(applicationData)
+    .flatMap(([key, value]) => {
+      if (key === 'landParcelIds' && Array.isArray(value)) {
+        return value
+      }
+
+      if (key === 'landParcelId' || /^landParcelId[A-Za-z0-9]+$/.test(key)) {
+        return [value]
+      }
+
+      return []
+    })
+    .map((id) => (id == null ? '' : String(id).trim()))
+    .filter(Boolean)
 }
 
 function formatGrantAmount(amount) {

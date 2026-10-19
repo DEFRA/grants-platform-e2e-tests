@@ -13,11 +13,12 @@ export async function loginAndRunWoodlandManagementJourney({
   username,
   password,
   applicationData,
-  expectedPaymentAmount
+  expectedPaymentAmount,
+  sbi
 }) {
   await WoodlandHomePage.open()
   await step('Wait for login or check-details page', async () => {
-    await loginAndValidate(username, password)
+    await loginAndValidate(username, password, sbi)
   })
 
   if (!applicationData) {
@@ -219,8 +220,77 @@ async function loginForReturnedApplication(username, password) {
   )
 }
 
-async function loginAndValidate(username, password) {
+async function selectBusinessBySbiIfShown(sbi) {
+  if (sbi == null || String(sbi).trim() === '') {
+    return
+  }
+
+  let pageState
+
+  await browser.waitUntil(
+    async () => {
+      try {
+        const businessLabel = await $(`label*=${sbi}`)
+        if (await businessLabel.isDisplayed()) {
+          pageState = 'choose-business'
+          return true
+        }
+
+        const detailsRadio = await $('#businessDetailsUpToDate')
+        if (await detailsRadio.isExisting()) {
+          pageState = 'check-details'
+          return true
+        }
+      } catch {
+        return false
+      }
+
+      return false
+    },
+    {
+      timeout: 50000,
+      timeoutMsg:
+        'Neither choose-a-business nor check-details page loaded after login'
+    }
+  )
+
+  if (pageState !== 'choose-business') {
+    return
+  }
+
+  await step(`Choose business with SBI ${sbi}`, async () => {
+    const businessLabel = await $(`label*=${sbi}`)
+    await businessLabel.waitForClickable({
+      timeout: 50000,
+      timeoutMsg: `Business with SBI ${sbi} was not shown`
+    })
+    await businessLabel.click()
+
+    const radioId = await businessLabel.getAttribute('for')
+    if (radioId) {
+      const radio = await $(`[id="${radioId}"]`)
+      if (!(await radio.isSelected())) {
+        await radio.click()
+      }
+    }
+
+    await WoodlandHomePage.clickButton('Continue')
+    await browser.waitUntil(
+      async () => {
+        const businessLabel = await $(`label*=${sbi}`)
+        return !(await businessLabel.isDisplayed())
+      },
+      {
+        timeout: 50000,
+        timeoutMsg: `Choose a business page stayed open after selecting SBI ${sbi}`
+      }
+    )
+  })
+}
+
+async function loginAndValidate(username, password, sbi) {
   await loginIfRequired(username, password)
+  await selectBusinessBySbiIfShown(sbi)
 
   await browser.waitUntil(
     async () => {
