@@ -1,15 +1,20 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
-  completeWoodlandFCJourney,
-  completeWoodlandJourney,
-  returnWoodlandApplication
+  updateCRMAndCompleteForestryCommissionJourney,
+  createDraftWoodlandAgreement,
+  returnWoodlandApplication,
+  checkApplicationStatusOnCW
 } from '../../journey-helpers/cw-journey-helper.js'
 import {
   loginAndRunWoodlandManagementJourney,
-  loginAndUpdateWoodlandApplication
+  loginAndUpdateWoodlandApplication,
+  submitClaimForWoodlandApplication
 } from '../../journey-helpers/woodland-journey-helper.js'
 import Backend from '../../utils/backend.js'
 import { completeWoodlandAgreementJourney } from '../../journey-helpers/agreement-journey-helper.js'
+import { approveClaimAsGrantsPlatformAdministrator } from '~/test/journey-helpers/grants-platform-admin-helper.js'
+import { claimsStep } from '~/test/utils/featureFlags.js'
+import { runGpsPaymentChecksForWMP } from '~/test/utils/gps_payment_helper.js'
 
 const crn = '1106298365'
 test.use({ crn })
@@ -18,19 +23,27 @@ test.afterEach(async ({ context }) => {
   await context.clearCookies()
 })
 
-test.describe('Return Application', () => {
+test.describe('Return Application; decrease area and hence the payment value', () => {
   test('The case worked is able to return the  application back', async () => {
     const password = process.env.DEFRA_ID_USER_PASSWORD
 
     const woodlandApplicationData = {
-      landParcelId: 'NT8701-9412',
-      hectaresTenOrOverYearsOld: 50,
+      landParcelIdOne: 'NT8701-9412',
+      landParcelIdTwo: ' NT8108-1434',
+      WoodlandAreaTenOrOverYearsOld: 500,
+      WoodlandAreaUnderTenYearsOld: 20,
       centreGridReference: 'SP 4178 2432',
       woodlandName: 'Ashbrook WD',
       fcTeamCodeId: 'fcTeamCode-2'
     }
 
     const sbi = '106480734'
+    const code = 'woodland'
+    const expectedPaymentAmount = 1500
+    let agreementId
+    const initialExpectedPaymentAmount = 9300
+    const revisedExpectedPaymentAmount = 1530
+
     await Backend.clearTestData(sbi, 'woodland')
     console.log('woodland application state cleared')
 
@@ -39,7 +52,8 @@ test.describe('Return Application', () => {
         return loginAndRunWoodlandManagementJourney({
           username: crn,
           password,
-          applicationData: woodlandApplicationData
+          applicationData: woodlandApplicationData,
+          initialExpectedPaymentAmount
         })
       })
 
@@ -49,30 +63,79 @@ test.describe('Return Application', () => {
     })
 
     const updatedWoodlandApplicationData = {
-      landParcelId: 'NT8701-9412',
-      hectaresTenOrOverYearsOld: 35,
+      landParcelIdOne: 'NT8701-9412',
+      WoodlandAreaTenOrOverYearsOld: 50,
+      WoodlandAreaUnderTenYearsOld: 1,
       centreGridReference: 'SP 4178 2432',
       woodlandName: 'Ashbrook WD',
       fcTeamCodeId: 'fcTeamCode-2'
     }
 
+    const totalAreaForClaim =
+      Number(
+        updatedWoodlandApplicationData.WoodlandAreaTenOrOverYearsOld ?? 0
+      ) +
+      Number(updatedWoodlandApplicationData.WoodlandAreaUnderTenYearsOld ?? 0)
+
     const { newAppRefNum } =
-      await test.step('Farmer updates the application and resubmit', async () => {
+      await test.step('Farmer updates the application with reduced area and resubmit', async () => {
         return loginAndUpdateWoodlandApplication({
           username: crn,
           password,
-          applicationData: updatedWoodlandApplicationData
+          applicationData: updatedWoodlandApplicationData,
+          revisedExpectedPaymentAmount
         })
       })
 
-    await test.step('CW approves the application along with the Forestry Commission journey', async () => {
-      console.log('New appRefNum: ' + newAppRefNum)
-      const { agreementId } = await completeWoodlandJourney(newAppRefNum)
-      const code = 'woodland'
-
+    await test.step('Case worker creates a draft agreement', async () => {
+      console.log('App Ref Num: ' + newAppRefNum)
+      const createdAgreement = await createDraftWoodlandAgreement(newAppRefNum)
+      agreementId = createdAgreement.agreementId
       console.log('Agreement ID: ' + agreementId)
-      await completeWoodlandAgreementJourney(agreementId, code, crn, password)
-      await completeWoodlandFCJourney(newAppRefNum)
     })
+
+    await test.step('Farmer reviews and accepts the offer agreement sent to them by Case working team', async () => {
+      await completeWoodlandAgreementJourney(agreementId, code, crn, password)
+    })
+
+    await test.step('Case worker updates CRM and Forestry Commission completes the review process', async () => {
+      await updateCRMAndCompleteForestryCommissionJourney(newAppRefNum)
+    })
+
+    await claimsStep(
+      test,
+      'Grants Platform Administrator approves the claim',
+      async () => {
+        await approveClaimAsGrantsPlatformAdministrator(
+          appRefNum,
+          totalAreaForClaim
+        )
+      }
+    )
+
+    await claimsStep(
+      test,
+      'As a farmer you make a claim for Woodlands application',
+      async () => {
+        await submitClaimForWoodlandApplication(appRefNum)
+      }
+    )
+
+    await claimsStep(
+      test,
+      'Grants Payment Service is able to send payment details to Payment Hub',
+      async () => {
+        await runGpsPaymentChecksForWMP(sbi, expectedPaymentAmount)
+      }
+    )
+
+    await claimsStep(
+      test,
+      'Application status on CW should be Claim complete',
+      async () => {
+        console.log('App Ref Num: ' + appRefNum)
+        await checkApplicationStatusOnCW(appRefNum, 'Claim Completed')
+      }
+    )
   })
 })

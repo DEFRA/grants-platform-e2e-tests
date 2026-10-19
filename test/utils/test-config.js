@@ -40,6 +40,7 @@ export function loadTestConfig(
       baseUrl: 'http://localhost:3000',
       cwUrl: undefined,
       agreementsUrl: undefined,
+      grantsAdminUrl: undefined,
       gpsUrl: undefined,
       baseBackendUrl: undefined,
       proxy: undefined
@@ -52,6 +53,9 @@ export function loadTestConfig(
       baseUrl: grantsUiBase,
       cwUrl: `https://fg-cw-frontend.${environment}.cdp-int.defra.cloud/cases`,
       agreementsUrl: `${grantsUiBase}/`,
+      grantsAdminUrl: environment
+        ? `https://fg-grants-platform-admin.${environment}.cdp-int.defra.cloud/grant-ops/grants/woodland/applications/`
+        : undefined,
       gpsUrl: environment
         ? `https://ephemeral-protected.api.${environment}.cdp-int.defra.cloud/grants-payment-service/`
         : undefined,
@@ -67,6 +71,9 @@ export function loadTestConfig(
     baseUrl: grantsUiBase,
     cwUrl: `https://fg-cw-frontend.${environment}.cdp-int.defra.cloud/cases`,
     agreementsUrl: `${grantsUiBase}/`,
+    grantsAdminUrl: environment
+      ? `https://fg-grants-platform-admin.${environment}.cdp-int.defra.cloud/grant-ops/grants/woodland/applications/`
+      : undefined,
     gpsUrl: environment
       ? `https://grants-payment-service.${environment}.cdp-int.defra.cloud/`
       : undefined,

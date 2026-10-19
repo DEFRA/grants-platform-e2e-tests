@@ -12,7 +12,8 @@ const RETURNED_APPLICATION_HEADING =
 export async function loginAndRunWoodlandManagementJourney({
   username,
   password,
-  applicationData
+  applicationData,
+  expectedPaymentAmount
 }) {
   await WoodlandHomePage.open()
   await step('Wait for login or check-details page', async () => {
@@ -26,7 +27,7 @@ export async function loginAndRunWoodlandManagementJourney({
   await WoodlandHomePage.completeCheckDetails()
   await WoodlandHomePage.completeEligibility()
   await WoodlandHomePage.completeWoodlandDetails(applicationData)
-  await WoodlandHomePage.submitApplication()
+  await WoodlandHomePage.submitApplication(expectedPaymentAmount)
 
   return step('Read application reference from confirmation page', async () => {
     await browser.waitUntil(
@@ -37,6 +38,43 @@ export async function loginAndRunWoodlandManagementJourney({
     const appRefNum = await WoodlandHomePage.getApplicationReference()
     await browser.takeScreenshot()
     return { appRefNum }
+  })
+}
+
+/**
+ * Submit the farmer's woodland claim after the claimable item has been created.
+ */
+export async function submitClaimForWoodlandApplication(appRefNum) {
+  await step(`Open woodland claim for ${appRefNum}`, async () => {
+    await WoodlandHomePage.openClaim()
+    await WoodlandHomePage.waitForUrlIncludes('/woodland/claim')
+    const heading = await $('h1')
+    await heading.waitForDisplayed({ timeout: 50000 })
+    expect(await heading.getText()).toBe('Review your WMP claim')
+    await browser.takeScreenshot()
+  })
+
+  await step('Continue from review your WMP claim', async () => {
+    await WoodlandHomePage.clickButton('Continue')
+    await WoodlandHomePage.waitForUrlIncludes('/woodland/claim-declaration')
+  })
+
+  await step('Confirm and submit the claim declaration', async () => {
+    await WoodlandHomePage.clickButton('Confirm and submit')
+    await browser.waitUntil(
+      async () =>
+        (await browser.getUrl()).includes('/woodland/claim-confirmation'),
+      {
+        timeout: 30000,
+        timeoutMsg: 'Woodland claim confirmation page did not load'
+      }
+    )
+
+    const panelTitle = await $('.govuk-panel__title')
+    await panelTitle.waitForDisplayed({ timeout: 50000 })
+    expect(await panelTitle.getText()).toBe('Claim submitted')
+    expect(await WoodlandHomePage.getApplicationReference()).toBeTruthy()
+    await browser.takeScreenshot()
   })
 }
 
@@ -64,9 +102,7 @@ export async function loginAndUpdateWoodlandApplication({
   })
 
   await WoodlandHomePage.clickButton('Continue')
-  await WoodlandHomePage.updateWoodlandOverTenYearsOld(
-    applicationData.hectaresTenOrOverYearsOld
-  )
+  await WoodlandHomePage.updateWoodlandAreas(applicationData)
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.clickButton('Continue')
   await WoodlandHomePage.clickButton('Confirm and submit')

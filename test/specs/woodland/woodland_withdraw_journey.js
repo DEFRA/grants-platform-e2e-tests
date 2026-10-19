@@ -1,7 +1,7 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
-  completeWoodlandJourney,
-  completeWithdrawJourney
+  completeWithdrawJourney,
+  createDraftWoodlandAgreement
 } from '../../journey-helpers/cw-journey-helper.js'
 import { loginAndRunWoodlandManagementJourney } from '../../journey-helpers/woodland-journey-helper.js'
 import Backend from '../../utils/backend.js'
@@ -40,8 +40,8 @@ test.describe('Woodland Management Plan Happy E2E path', () => {
 
     await test.step('CW approves the application along with Agreement and the Forestry Commission journey', async () => {
       console.log('App Ref Num: ' + appRefNum)
-      const { agreementId } = await completeWoodlandJourney(appRefNum)
-      console.log('Agreement Id: ' + agreementId)
+      const createdAgreement = await createDraftWoodlandAgreement(appRefNum)
+      console.log('Agreement Id: ' + createdAgreement)
 
       await completeWithdrawJourney(appRefNum)
     })
