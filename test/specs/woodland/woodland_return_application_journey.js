@@ -39,7 +39,7 @@ test.describe('Return Application; decrease area and hence the payment value', (
 
     const sbi = '106480734'
     const code = 'woodland'
-    const expectedPaymentAmount = 1500
+    const expectedPaymentAmount = 1530
     let agreementId
     const initialExpectedPaymentAmount = 9300
     const revisedExpectedPaymentAmount = 1530
@@ -107,7 +107,7 @@ test.describe('Return Application; decrease area and hence the payment value', (
       'Grants Platform Administrator approves the claim',
       async () => {
         await approveClaimAsGrantsPlatformAdministrator(
-          appRefNum,
+          newAppRefNum,
           totalAreaForClaim
         )
       }
@@ -117,7 +117,7 @@ test.describe('Return Application; decrease area and hence the payment value', (
       test,
       'As a farmer you make a claim for Woodlands application',
       async () => {
-        await submitClaimForWoodlandApplication(appRefNum)
+        await submitClaimForWoodlandApplication(newAppRefNum)
       }
     )
 
@@ -133,8 +133,8 @@ test.describe('Return Application; decrease area and hence the payment value', (
       test,
       'Application status on CW should be Claim complete',
       async () => {
-        console.log('App Ref Num: ' + appRefNum)
-        await checkApplicationStatusOnCW(appRefNum, 'Claim Completed')
+        console.log('App Ref Num: ' + newAppRefNum)
+        await checkApplicationStatusOnCW(newAppRefNum, 'Claim Completed')
       }
     )
   })
