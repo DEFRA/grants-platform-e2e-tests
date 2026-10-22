@@ -42,10 +42,18 @@ export async function selectLandParcelAndVerifyOnActionsPage({
 }
 
 /**
- * Assert an action checkbox is not offered on the select-actions page.
+ * Select a land parcel on the map and verify no actions are available.
  */
-export async function verifyActionNotAvailableOnActionsPage(actionCode) {
-  await GrasslandPage.verifyActionNotShown(actionCode)
+export async function selectLandParcelAndVerifyNoActionsAvailable({
+  parcelId,
+  areaHa
+}) {
+  await GrasslandPage.waitForUrlIncludes('/grasslands/select-land-parcel')
+  await GrasslandPage.selectParcelOnMap(parcelId, areaHa)
+  await GrasslandPage.verifyNoActionsAvailableForSelectedParcel(
+    parcelId,
+    areaHa
+  )
 }
 
 /**

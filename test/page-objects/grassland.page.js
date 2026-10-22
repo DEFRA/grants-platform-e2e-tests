@@ -139,16 +139,36 @@ class GrasslandPage extends Page {
     )
   }
 
-  async verifyActionNotShown(actionCode) {
-    return step(`Verify action ${actionCode} is not shown`, async () => {
-      await this.waitForUrlIncludes(
-        '/grasslands/select-actions-for-land-parcel'
-      )
-      await this.waitForAvailableActionsReady()
+  async verifyNoActionsAvailableForSelectedParcel(parcelId, areaHa) {
+    return step(
+      `Verify no actions are available for parcel ${parcelId}`,
+      async () => {
+        playwrightExpect(await browser.getUrl()).toContain(
+          '/grasslands/select-land-parcel'
+        )
 
-      await playwrightExpect(this.actionCheckbox(actionCode)).toHaveCount(0)
-      await browser.takeScreenshot()
-    })
+        const selectedParcelDetails = getPage().locator(
+          '#selected-parcel-details'
+        )
+        const parcelIdWithSpace = parcelId.replace('-', ' ')
+        const area = Number(areaHa)
+
+        await playwrightExpect(async () => {
+          const selectedText = await selectedParcelDetails.innerText()
+          playwrightExpect(
+            selectedText.includes(parcelId) ||
+              selectedText.includes(parcelIdWithSpace)
+          ).toBe(true)
+          playwrightExpect(selectedText).toContain(`${area} ha`)
+          playwrightExpect(selectedText).toMatch(/Available actions\s+0/)
+          playwrightExpect(selectedText).toContain(
+            'There are no actions available for this land parcel. Select another land parcel to continue.'
+          )
+        }).toPass({ timeout: 60000 })
+
+        await browser.takeScreenshot()
+      }
+    )
   }
 
   async selectActionsWithQuantities(actions) {
