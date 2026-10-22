@@ -1,8 +1,7 @@
 import { test } from '../../fixtures/base.fixture.js'
 import {
   loginAndCompleteGrasslandTasklistQuestions,
-  selectLandParcelAndVerifyOnActionsPage,
-  verifyActionNotAvailableOnActionsPage
+  selectLandParcelAndVerifyNoActionsAvailable
 } from '../../journey-helpers/grassland-journey-helper.js'
 import Backend from '../../utils/backend.js'
 
@@ -22,7 +21,6 @@ test.describe('CNUM2 action', () => {
 
       const selectLandParcel = 'SK0971-5761'
       const totalParcelArea = '0.6116'
-      const actionOne = 'CNUM2_26'
 
       const sbi = '106514040'
       await Backend.clearTestData(sbi, 'grasslands')
@@ -35,12 +33,11 @@ test.describe('CNUM2 action', () => {
         })
       })
 
-      await test.step('Then the farmer is not shown the action that is incompatible with existing agreement', async () => {
-        await selectLandParcelAndVerifyOnActionsPage({
+      await test.step('Then the farmer is not shown the action as is incompatible with existing agreement', async () => {
+        await selectLandParcelAndVerifyNoActionsAvailable({
           parcelId: selectLandParcel,
           areaHa: totalParcelArea
         })
-        await verifyActionNotAvailableOnActionsPage(actionOne)
       })
     }
   )
